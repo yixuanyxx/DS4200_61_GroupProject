@@ -3,51 +3,45 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Unboxing the Retail Pulse — Superstore Profit Analysis</title>
-  <meta name="description" content="Visual analysis of Superstore sales, discounts, and regional performance to understand what drives profit." />
+  <title>Unboxing the Retail Pulse: Superstore Profit</title>
+  <meta name="description" content="DS4200 group project: Superstore data and charts about profit." />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-  <a class="skip-link" href="#main">Skip to content</a>
-
   <header class="site-header">
     <div class="header-inner">
-      <p class="eyebrow">DS4200 · Information Presentation and Data Visualisation</p>
+      <p class="course-line">DS4200 / Information Presentation and Data Visualisation / Group 61</p>
       <h1>Unboxing the Retail Pulse</h1>
-      <p class="subtitle">A visual analysis of Superstore sales, trends, and what drives profit</p>
-      <nav class="site-nav" aria-label="Page sections">
-        <a href="#introduction">Introduction</a>
+      <p class="subtitle">Superstore sales, discounts, and what actually drives profit</p>
+      <nav class="site-nav">
+        <a href="#introduction">Intro</a>
         <a href="#data">Data</a>
         <a href="#references">References</a>
-        <a href="#viz-overview">Visualizations</a>
+        <a href="#viz-overview">Charts</a>
         <a href="#findings">Findings</a>
       </nav>
     </div>
   </header>
 
   <main id="main">
-    <section id="introduction" class="section section-intro">
+    <section id="introduction" class="section">
       <div class="container narrow">
         <h2>Introduction</h2>
         <p>
-          Retail organizations compete on thin margins. Revenue alone is a misleading scorecard: a category
-          can show strong sales while destroying profit through discounts, shipping costs, or mix effects.
-          This project asks a single guiding question:
-          <strong>What factors drive profit in the Superstore data, and why do some segments lose money despite healthy sales?</strong>
+          For retailers, big sales numbers do not always mean the business is doing well. A category can sell a lot
+          and still lose money because of discounts, shipping, or product mix. Our group wanted to focus on one main
+          question:
+          <strong>What affects profit in this dataset, and why do some parts of the business lose money even when sales look fine?</strong>
         </p>
         <p>
-          We pursue that question in five connected views. We start with an <em>overview</em> of how sales and
-          profit move over time. We then examine the <em>relationship between discount and profit</em> at the
-          order line level. Next we <em>compare categories and regions</em> to see where value is created or
-          eroded. We then <em>zoom in on a subgroup</em> with unusual performance (for example, high sales but
-          weak or negative profit). Finally, we use an <em>interactive deep dive</em> to explain mechanisms behind
-          that subgroup—how discount, category, and region interact—so the story moves from the whole business
-          to a concrete, actionable case.
+          We use five charts that build on each other. First, an overview of sales and profit over time. Second, a
+          scatter plot of discount vs profit on each order line. Third, bars to compare categories and regions. Fourth,
+          a closer look at one bad segment (we picked something with high sales but weak profit). Fifth, an interactive
+          D3 chart to dig into that segment. The idea is to go from the big picture down to one specific problem area.
         </p>
-        <p class="tasks">
-          <strong>Project tasks:</strong> Explore the Superstore transactional data; build static and interactive
-          visualizations (including Altair and D3); publish an integrated narrative on this site; and summarize
-          evidence-based conclusions for retail-style decision support.
+        <p>
+          <strong>What we had to do for class:</strong> clean and explore the data, make static charts in Altair and at
+          least one interactive D3 chart, put everything on this site, and write up what we found.
         </p>
       </div>
     </section>
@@ -56,26 +50,22 @@
       <div class="container narrow">
         <h2>Data</h2>
         <p>
-          We use the <strong>Superstore Sales</strong> dataset (open data, widely used for teaching), representing
-          line items from a U.S. retail “superstore” between 2014 and 2017. The source is the Kaggle repository
-          <em>Sales Forecasting / Superstore</em> (Rohit Sahoo), published under permissive terms suitable for
-          academic use. We loaded the CSV in Python with Pandas; each row is one product line within an order.
+          We used the <strong>Superstore</strong> CSV from Kaggle (Rohit Sahoo, “Sales Forecasting”). It is a common
+          classroom dataset: fake retail orders in the US from 2014 to 2017. We downloaded it as a CSV and loaded it in
+          Python with pandas. Each row is one line item in an order (one product line), not one whole order.
         </p>
         <p>
-          After cleaning (consistent date types, removal of duplicates if any, and derived fields such as year and
-          month for seasonality), the analytical table contains on the order of <strong>9,800 rows</strong> and
-          roughly <strong>20 attributes</strong>, including: order and ship dates; ship mode; customer ID, name,
-          and segment; geography (country, city, state, postal code, region); product hierarchy (category,
-          sub-category, product name); and numeric measures <strong>Sales</strong>, <strong>Quantity</strong>,
-          <strong>Discount</strong>, and <strong>Profit</strong>. The mix of categorical dimensions and continuous
-          measures supports time series, geographic or regional comparisons, and scatter or distribution plots.
+          After cleaning (dates parsed, duplicates removed if we found any, plus columns like year and month), we had
+          about <strong>9,800 rows</strong> and around <strong>20 columns</strong>. Main fields include order date,
+          ship date, ship mode, customer info, city/state/region, product category and subcategory, and numbers for
+          sales, quantity, discount, and profit. There is a mix of categories and numbers, so we can do time series,
+          bar charts, and scatter plots.
         </p>
         <p>
-          The data are suitable for our topic because they mirror real retail decisions: pricing via discount,
-          assortment via category, and fulfillment via ship mode—each plausibly linked to profit. What the data do
-          not contain—cost of goods sold at line level, inventory, or customer acquisition cost—means we interpret
-          “profit” as the margin recorded in the dataset and discuss limitations where causal claims would require
-          richer operational data.
+          The dataset fits our topic because it has discount, region, and category, which are all things a store might
+          care about for profit. It does <strong>not</strong> include real cost of goods, inventory, or marketing spend,
+          so when we say “profit” we mean the profit column in the file. We cannot claim we proved causation from this
+          alone, only patterns that match the story in the charts.
         </p>
       </div>
     </section>
@@ -83,24 +73,24 @@
     <section id="references" class="section">
       <div class="container narrow">
         <h2>References</h2>
-        <p>Related work on retail analytics and visualization informs our framing. We cite two accessible references:</p>
+        <p>Two papers we looked at for background (plus the dataset link):</p>
         <ul class="ref-list">
           <li>
             Quoc, H. D., Thi, H. M., Ngoc, M. N., &amp; Dieu, H. V. (2024).
             <em>Optimize Retail System Performance by Analyzing Big Data and Visualizing with Power BI.</em>
-            <a href="https://www.ijisae.org/index.php/IJISAE/article/view/4460" target="_blank" rel="noopener noreferrer">IJISAE article page</a>
-            — demonstrates how large transactional datasets and dashboards support operational and trend insight.
+            <a href="https://www.ijisae.org/index.php/IJISAE/article/view/4460" target="_blank" rel="noopener noreferrer">Link</a>.
+            Talks about using big retail data and dashboards (similar idea to Power BI) to see trends.
           </li>
           <li>
             Haessner, P., Haessner, J., &amp; Thomas, J. (2024).
             <em>Maximizing Retail Potential: The Role of Big Data Analytics.</em>
-            <a href="https://articlegateway.com/index.php/JSIS/article/view/7486/7076" target="_blank" rel="noopener noreferrer">Journal of Strategic Innovation and Sustainability</a>
-            — reviews strategic use of analytics in retail, including turning complex data into actionable views.
+            <a href="https://articlegateway.com/index.php/JSIS/article/view/7486/7076" target="_blank" rel="noopener noreferrer">Link</a>.
+            Overview of how retailers use analytics and big data for decisions.
           </li>
         </ul>
         <p>
-          <strong>Dataset:</strong>
-          <a href="https://www.kaggle.com/datasets/rohitsahoo/sales-forecasting" target="_blank" rel="noopener noreferrer">Kaggle — Superstore Sales (Sales Forecasting)</a>.
+          <strong>Data:</strong>
+          <a href="https://www.kaggle.com/datasets/rohitsahoo/sales-forecasting" target="_blank" rel="noopener noreferrer">Kaggle: Superstore Sales (Sales Forecasting)</a>.
         </p>
       </div>
     </section>
@@ -109,89 +99,76 @@
       <div class="container">
         <h2 class="section-title-center">Visualizations</h2>
         <p class="lead center">
-          Below, each figure includes a short takeaway for readers. Technical teammates embed Altair- and D3-based
-          charts into the placeholders; interaction types (e.g., filter, brush, hover) are documented in our design rationale file.
+          Below is a short note for each chart (the “takeaway”). Our teammates will paste the real Altair and D3 figures
+          into the gray boxes. Interactions (hover, filter, etc.) are described in the design writeup we submit separately.
         </p>
 
-        <!-- Visualization 1 -->
         <article id="viz-overview" class="viz-block">
-          <h3>1. Overview — Sales and profit over time</h3>
+          <h3>1. Overview: sales and profit over time</h3>
           <figure class="viz-figure" data-viz="overview" data-tool="altair">
             <div class="viz-placeholder" role="img" aria-label="Placeholder for overview chart">
-              <p><strong>Embed:</strong> Altair line or area chart — Sales and Profit by month (or week), optionally faceted by year.</p>
-              <p class="hint">Person 1: export chart to SVG/PNG or embed via Vega-Lite; Person 2: ensure container width in <code>#viz-overview .viz-figure</code>.</p>
+              <p><strong>Embed:</strong> Altair line or area chart. Sales and profit by month (or week), can facet by year.</p>
+              <p class="hint">Yuansi: export or Vega-Lite embed. Ryan: check width in CSS if needed.</p>
             </div>
             <figcaption class="takeaway">
-              <strong>Takeaway:</strong> This view establishes the business rhythm: whether profit tracks sales, whether
-              there is seasonality or drift across years, and whether any period shows sales growth with flat or falling
-              profit (an early signal of margin pressure). It sets the stage for asking <em>why</em> later views show
-              discount or category effects.
+              <strong>Takeaway:</strong> This shows whether profit generally follows sales and if there is a seasonality
+              pattern. If sales go up but profit stays flat or drops, that is a hint to look at discounts and categories next.
             </figcaption>
           </figure>
         </article>
 
-        <!-- Visualization 2 -->
         <article id="viz-discount" class="viz-block">
-          <h3>2. Key relationship — Discount versus profit</h3>
+          <h3>2. Discount vs profit</h3>
           <figure class="viz-figure" data-viz="discount-profit" data-tool="altair">
             <div class="viz-placeholder" role="img" aria-label="Placeholder for discount vs profit scatter">
-              <p><strong>Embed:</strong> Altair scatter plot — Discount (x) vs Profit (y), with optional color by Category or Region.</p>
-              <p class="hint">Consider jitter or transparency for overplotting; include reference line at zero profit.</p>
+              <p><strong>Embed:</strong> Altair scatter: discount on x, profit on y. Optional color by category or region.</p>
+              <p class="hint">Lots of points: try opacity or jitter. Horizontal line at profit = 0 helps.</p>
             </div>
             <figcaption class="takeaway">
-              <strong>Takeaway:</strong> Heavy discounting is not always “bad,” but clusters of high discount and negative
-              profit suggest pricing or promotion rules that erode margin. This plot makes the trade-off visible at the
-              line-item level and motivates region or category comparisons next.
+              <strong>Takeaway:</strong> You can see if high discounts line up with low or negative profit. Not every
+              discount is bad, but big clusters of deep discount and negative profit are a red flag for pricing.
             </figcaption>
           </figure>
         </article>
 
-        <!-- Visualization 3 -->
         <article id="viz-compare" class="viz-block">
-          <h3>3. Category and region comparison</h3>
+          <h3>3. Category and region</h3>
           <figure class="viz-figure" data-viz="category-region" data-tool="altair">
             <div class="viz-placeholder" role="img" aria-label="Placeholder for category or region bar chart">
-              <p><strong>Embed:</strong> Altair bar chart(s) — e.g., total or average Profit by Region and/or Category (sorted).</p>
-              <p class="hint">Grouped or stacked bars; consistent color palette with overview figure.</p>
+              <p><strong>Embed:</strong> Bar chart(s): total or average profit by region and/or category, sorted so worst/best are easy to see.</p>
+              <p class="hint">Try to use similar colors as chart 1 so the page looks consistent.</p>
             </div>
             <figcaption class="takeaway">
-              <strong>Takeaway:</strong> Aggregating to category and region shows where the business earns and where it
-              subsidizes volume. Divergence between regions with similar sales but different profit hints at discount or
-              mix differences; divergence between categories highlights assortment risk. This chart selects candidate
-              subgroups for the deep dive.
+              <strong>Takeaway:</strong> This step shows which regions and categories make money and which do not. It also
+              helps us choose which subgroup to focus on in charts 4 and 5.
             </figcaption>
           </figure>
         </article>
 
-        <!-- Visualization 4 -->
         <article id="viz-subgroup" class="viz-block">
-          <h3>4. Subgroup focus — Where sales and profit disagree</h3>
+          <h3>4. Subgroup focus</h3>
           <figure class="viz-figure" data-viz="subgroup" data-tool="altair-or-static">
             <div class="viz-placeholder" role="img" aria-label="Placeholder for subgroup highlight chart">
-              <p><strong>Embed:</strong> Focused chart — e.g., Furniture in Central region, or orders with discount &gt; 40%: sales vs profit, or waterfall-style contribution.</p>
-              <p class="hint">Align with the subgroup chosen in analysis (document in findings).</p>
+              <p><strong>Embed:</strong> One focused chart for a bad segment (example: Furniture in Central, or high discount orders). Sales vs profit or similar.</p>
+              <p class="hint">Match whatever subgroup we actually pick in the analysis.</p>
             </div>
             <figcaption class="takeaway">
-              <strong>Takeaway:</strong> This figure isolates one problematic slice: a segment that looks successful on
-              sales but fails on profit (or loses money). It bridges broad comparisons to a concrete “case” that the
-              interactive view will unpack.
+              <strong>Takeaway:</strong> Zooms in on one place where sales and profit do not match. Sets up the D3 chart
+              to explain that slice in more detail.
             </figcaption>
           </figure>
         </article>
 
-        <!-- Visualization 5 -->
         <article id="viz-deep-dive" class="viz-block">
-          <h3>5. Deep dive — Interactive explanation (D3)</h3>
+          <h3>5. Deep dive (D3)</h3>
           <figure class="viz-figure" data-viz="deep-dive" data-tool="d3">
             <div class="viz-placeholder viz-placeholder--d3" role="img" aria-label="Placeholder for D3 interactive chart">
-              <p><strong>Embed:</strong> D3 visualization — e.g., linked views, brushable scatter, or filtered bars exploring the subgroup (discount × profit with filters for region/category).</p>
-              <p class="hint">Person 2: mount script in <code>js/</code>; ensure at least three interaction types across the page (e.g., hover + filter + brush).</p>
+              <p><strong>Embed:</strong> D3 chart: e.g. linked views, brush on a scatter, or bars filtered by region/category inside the subgroup.</p>
+              <p class="hint">Ryan: script in <code>js/</code>. Class needs at least three interaction types on the site total (not only here).</p>
             </div>
             <figcaption class="takeaway">
-              <strong>Takeaway:</strong> Interactivity lets a reader test hypotheses within the subgroup: whether losses
-              concentrate in certain states, ship modes, or discount bins. The goal is not animation for its own sake but
-              <em>targeted exploration</em> that supports the main question—what drives profit and what explains losses
-              despite sales.
+              <strong>Takeaway:</strong> Lets readers explore that subgroup (states, ship mode, discount bins, etc.).
+              The point is to answer questions about the data, not just to animate things for fun.
             </figcaption>
           </figure>
         </article>
@@ -202,38 +179,29 @@
       <div class="container narrow">
         <h2>Summary of findings</h2>
         <p>
-          Taken together, the visualizations support a coherent story. The <strong>overview</strong> situates overall
-          performance and timing; <strong>discount versus profit</strong> shows that aggressive markdowns associate with
-          margin risk at the line level; <strong>category and region comparisons</strong> locate structural winners and
-          losers; the <strong>subgroup focus</strong> names a concrete problem area (to be confirmed with your exact
-          charts—e.g., a region–category pair with negative profit contribution); and the <strong>D3 deep dive</strong>
-          shows how multiple dimensions combine in that subgroup.
+          Putting the charts together: the time series shows overall performance; discount vs profit shows line-level
+          risk; the bar charts show which regions and categories are weak; the subgroup chart names one concrete problem;
+          the D3 piece explores that case. Exact numbers will depend on the final charts when they are plugged in.
         </p>
-        <p>
-          We highlight three conclusions aligned with our title and research question:
-        </p>
+        <p>Three main takeaways for our project question:</p>
         <ol class="findings-list">
           <li>
-            <strong>Profit is not proportional to sales.</strong> The same sales volume can yield different profit
-            depending on discount and category mix; decision-makers should monitor margin and discount intensity, not
-            revenue alone.
+            <strong>Profit does not follow sales 1:1.</strong> Same sales level can mean different profit depending on
+            discount and what was sold, so managers should look at margin and discount, not only revenue.
           </li>
           <li>
-            <strong>Discount policy needs segment-specific guardrails.</strong> Where high discounts coincide with
-            negative profit, analytics should trigger review of promotion rules, price floors, or bundle design—especially
-            in categories with high return or shipping cost (as suggested by business context, even if not every cost is
-            in the data).
+            <strong>Discounts need a second look in some segments.</strong> Where high discount and negative profit show up
+            together, it is worth checking promotion rules or pricing, especially in categories that might have returns or
+            high shipping (we cannot see all costs in the CSV, so this is still based on patterns in the data).
           </li>
           <li>
-            <strong>Geography and assortment interact.</strong> Underperforming regions or categories in profit space
-            deserve targeted follow-up—rebalancing assortment, renegotiating terms, or adjusting regional pricing—while
-            acknowledging that this dataset supports exploratory insight, not full causal attribution without cost data.
+            <strong>Region and product type matter together.</strong> A bad region in one category might need a different fix
+            than another region. We are not claiming we proved why, only what the data suggests for follow-up analysis.
           </li>
         </ol>
         <p>
-          <strong>Future work:</strong> Enriching the analysis with product cost, return rates, or customer lifetime
-          value would strengthen causal claims; extending the time range would test whether patterns persist; and
-          operational dashboards could monitor the same metrics monthly.
+          <strong>If we had more time or data:</strong> add real cost of goods, returns, or longer time ranges, and maybe
+          turn some of this into a simple dashboard for monthly checks.
         </p>
       </div>
     </section>
@@ -241,8 +209,8 @@
 
   <footer class="site-footer">
     <div class="container narrow">
-      <p><strong>Team:</strong> Yuansi Jiang (data &amp; Altair) · Yixuan Lim (narrative, design documentation, integration) · Ryan Wong (D3 &amp; web)</p>
-      <p class="footer-meta">DS4200 — Northeastern University · Superstore visualization project</p>
+      <p><strong>Group:</strong> Yuansi Jiang, Yixuan Lim, Ryan Wong</p>
+      <p class="footer-meta">DS4200, Group 61</p>
     </div>
   </footer>
 

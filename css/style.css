@@ -1,156 +1,105 @@
-/* Superstore project — cohesive retail / analytics theme */
-:root {
-  --bg: #f6f8fb;
-  --bg-alt: #eef2f7;
-  --surface: #ffffff;
-  --text: #1a2332;
-  --muted: #5c6b7f;
-  --accent: #0d6e6e;
-  --accent-soft: rgba(13, 110, 110, 0.12);
-  --border: #d5dde8;
-  --shadow: 0 8px 24px rgba(26, 35, 50, 0.08);
-  --font: "Segoe UI", system-ui, -apple-system, sans-serif;
-  --font-heading: Georgia, "Times New Roman", serif;
-  --max: 720px;
-  --max-wide: 960px;
+/* Simple styles for our DS4200 project page */
+
+html {
+  box-sizing: border-box;
 }
 
 *,
 *::before,
 *::after {
-  box-sizing: border-box;
-}
-
-html {
-  scroll-behavior: smooth;
+  box-sizing: inherit;
 }
 
 body {
   margin: 0;
-  font-family: var(--font);
-  font-size: 1.05rem;
-  line-height: 1.65;
-  color: var(--text);
-  background: var(--bg);
-}
-
-.skip-link {
-  position: absolute;
-  left: -9999px;
-  z-index: 999;
-  padding: 0.5rem 1rem;
-  background: var(--accent);
-  color: #fff;
-}
-
-.skip-link:focus {
-  left: 1rem;
-  top: 1rem;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #222;
+  background: #f5f5f5;
 }
 
 .site-header {
-  background: linear-gradient(145deg, #0f3d4c 0%, #1a5c6e 45%, #0d6e6e 100%);
-  color: #f0f7f8;
-  padding: 2.5rem 1.5rem 2rem;
-  box-shadow: var(--shadow);
+  background: #2b6cb0;
+  color: #fff;
+  padding: 1.5rem 1rem 1.25rem;
+  border-bottom: 3px solid #1a4770;
 }
 
 .header-inner {
-  max-width: var(--max-wide);
+  max-width: 900px;
   margin: 0 auto;
 }
 
-.eyebrow {
+.course-line {
   font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  opacity: 0.9;
-  margin: 0 0 0.75rem;
+  margin: 0 0 0.5rem;
+  opacity: 0.95;
 }
 
 .site-header h1 {
-  font-family: var(--font-heading);
-  font-size: clamp(1.75rem, 4vw, 2.35rem);
-  font-weight: 700;
-  margin: 0 0 0.5rem;
-  line-height: 1.2;
+  font-size: 1.75rem;
+  margin: 0 0 0.35rem;
+  font-weight: bold;
 }
 
 .subtitle {
-  font-size: 1.1rem;
-  opacity: 0.95;
-  margin: 0 0 1.5rem;
-  max-width: 42ch;
+  margin: 0 0 1rem;
+  font-size: 1rem;
 }
 
 .site-nav {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem 1rem;
+  gap: 0.75rem 1rem;
 }
 
 .site-nav a {
-  color: #e8f4f4;
-  text-decoration: none;
-  font-size: 0.92rem;
-  border-bottom: 1px solid transparent;
-  padding-bottom: 2px;
+  color: #fff;
+  text-decoration: underline;
+  font-size: 0.95rem;
 }
 
-.site-nav a:hover,
-.site-nav a:focus-visible {
-  border-bottom-color: rgba(255, 255, 255, 0.7);
-  outline: none;
+.site-nav a:hover {
+  color: #e2f0ff;
 }
 
 .section {
-  padding: 2.75rem 1.5rem;
-}
-
-.section-alt {
-  background: var(--bg-alt);
-}
-
-.section-viz {
-  padding-bottom: 3rem;
-}
-
-.container {
-  max-width: var(--max-wide);
+  padding: 1.5rem 1rem;
+  max-width: 900px;
   margin: 0 auto;
 }
 
+.section-alt {
+  background: #eaeaea;
+}
+
+.section-viz {
+  max-width: 900px;
+}
+
+.container {
+  width: 100%;
+}
+
 .container.narrow {
-  max-width: var(--max);
+  max-width: 700px;
 }
 
 .section h2 {
-  font-family: var(--font-heading);
-  font-size: 1.65rem;
-  margin: 0 0 1rem;
-  color: #143544;
+  font-size: 1.35rem;
+  margin: 0 0 0.75rem;
+  color: #1a365d;
 }
 
 .section h3 {
-  font-size: 1.2rem;
-  margin: 0 0 0.75rem;
-  color: #1a4d5c;
+  font-size: 1.1rem;
+  margin: 0 0 0.5rem;
+  color: #2c5282;
 }
 
 .section p {
-  margin: 0 0 1rem;
-}
-
-.section p:last-child {
-  margin-bottom: 0;
-}
-
-.tasks {
-  padding: 1rem 1.25rem;
-  background: var(--surface);
-  border-left: 4px solid var(--accent);
-  border-radius: 0 6px 6px 0;
-  box-shadow: var(--shadow);
+  margin: 0 0 0.85rem;
 }
 
 .ref-list {
@@ -159,115 +108,101 @@ body {
 }
 
 .ref-list li {
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.6rem;
 }
 
 .ref-list a {
-  color: var(--accent);
-  word-break: break-word;
+  color: #2b6cb0;
 }
 
 .section-title-center {
   text-align: center;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
 }
 
 .lead.center {
   text-align: center;
-  max-width: 52ch;
-  margin: 0 auto 2.5rem;
-  color: var(--muted);
-  font-size: 0.98rem;
+  max-width: 40em;
+  margin: 0 auto 1.5rem;
+  font-size: 0.95rem;
+  color: #444;
 }
 
 .viz-block {
-  margin-bottom: 3rem;
-  scroll-margin-top: 1rem;
-}
-
-.viz-block:last-child {
-  margin-bottom: 0;
+  margin-bottom: 2rem;
+  scroll-margin-top: 0.75rem;
 }
 
 .viz-figure {
   margin: 0;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: var(--shadow);
+  background: #fff;
+  border: 1px solid #ccc;
 }
 
 .viz-placeholder {
-  min-height: 220px;
-  padding: 1.5rem;
-  background: linear-gradient(180deg, var(--accent-soft) 0%, var(--surface) 100%);
-  border-bottom: 1px solid var(--border);
+  min-height: 200px;
+  padding: 1rem;
+  background: #e8e8e8;
+  border-bottom: 1px solid #ccc;
 }
 
 .viz-placeholder p {
-  margin: 0 0 0.75rem;
+  margin: 0 0 0.5rem;
   font-size: 0.95rem;
-}
-
-.viz-placeholder p:last-child {
-  margin-bottom: 0;
 }
 
 .viz-placeholder .hint {
   font-size: 0.85rem;
-  color: var(--muted);
+  color: #555;
 }
 
 .viz-placeholder code {
-  font-size: 0.82rem;
-  background: var(--bg-alt);
-  padding: 0.1em 0.35em;
-  border-radius: 4px;
+  font-size: 0.85rem;
+  background: #ddd;
+  padding: 0.1em 0.3em;
 }
 
 .takeaway {
-  padding: 1.1rem 1.5rem 1.25rem;
+  padding: 0.75rem 1rem;
   font-size: 0.95rem;
-  line-height: 1.6;
+  background: #fff;
 }
 
 .takeaway strong {
-  color: #143544;
+  color: #1a365d;
 }
 
 .findings-list {
-  margin: 0.75rem 0 1rem;
+  margin: 0.5rem 0 0.85rem;
   padding-left: 1.25rem;
 }
 
 .findings-list li {
-  margin-bottom: 0.65rem;
+  margin-bottom: 0.5rem;
 }
 
 .site-footer {
-  background: #143544;
-  color: #c5d4dc;
-  padding: 2rem 1.5rem;
+  background: #1a365d;
+  color: #e2e8f0;
+  padding: 1.25rem 1rem;
   font-size: 0.9rem;
 }
 
 .site-footer strong {
-  color: #e8eef2;
+  color: #fff;
 }
 
 .footer-meta {
   margin: 0.75rem 0 0;
-  opacity: 0.85;
   font-size: 0.85rem;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 600px) {
   .section {
-    padding: 3.25rem 2rem;
+    padding: 2rem 1.5rem;
   }
 
-  .viz-placeholder {
-    min-height: 280px;
+  .site-header h1 {
+    font-size: 2rem;
   }
 }
