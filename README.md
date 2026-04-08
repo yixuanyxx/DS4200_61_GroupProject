@@ -4,11 +4,7 @@ DS4200 (**Information Presentation and Data Visualisation**), Group 61.
 
 ## Live site (GitHub Pages)
 
-After you turn Pages on (steps below), your project site URL is:
-
-`https://<your-github-username>.github.io/DS4200_61_GroupProject/`
-
-Replace `<your-github-username>` with the account that owns this repo (example: `yixuanyxx`).
+`https://yixuanyxx.github.io/DS4200_61_GroupProject/`
 
 ### Make this `index.html` show up on that URL
 

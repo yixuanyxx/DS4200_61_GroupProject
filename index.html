@@ -6,6 +6,9 @@
   <title>Unboxing the Retail Pulse: Superstore Profit</title>
   <meta name="description" content="DS4200 group project: Superstore data and charts about profit." />
   <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
 </head>
 <body>
   <header class="site-header">
@@ -99,20 +102,21 @@
       <div class="container">
         <h2 class="section-title-center">Visualizations</h2>
         <p class="lead center">
-          Below is a short note for each chart (the “takeaway”). Our teammates will paste the real Altair and D3 figures
-          into the gray boxes. Interactions (hover, filter, etc.) are described in the design writeup we submit separately.
+          Below is a short note for each chart (the “takeaway”). The Altair and D3 figures are embedded from our
+          Python and JavaScript files. Interactions (hover, filter, brush, dropdowns) are also explained in our
+          separate design writeup.
         </p>
 
         <article id="viz-overview" class="viz-block">
           <h3>1. Overview: sales and profit over time</h3>
           <figure class="viz-figure" data-viz="overview" data-tool="altair">
-            <div class="viz-placeholder" role="img" aria-label="Placeholder for overview chart">
-              <p><strong>Embed:</strong> Altair line or area chart. Sales and profit by month (or week), can facet by year.</p>
-              <p class="hint">Yuansi: export or Vega-Lite embed. Ryan: check width in CSS if needed.</p>
+            <div class="viz-placeholder" role="img" aria-label="Monthly sales and profit over time">
+              <div id="viz1_container" class="chart-container"></div>
             </div>
             <figcaption class="takeaway">
-              <strong>Takeaway:</strong> This shows whether profit generally follows sales and if there is a seasonality
-              pattern. If sales go up but profit stays flat or drops, that is a hint to look at discounts and categories next.
+              <strong>Takeaway:</strong> Sales and profit both grow year-over-year, with clear Q4 seasonality every year.
+              However, profit consistently lags behind sales — revenue growth alone does not guarantee profitability,
+              and discount-driven sales may be eroding margins in some months.
             </figcaption>
           </figure>
         </article>
@@ -120,13 +124,13 @@
         <article id="viz-discount" class="viz-block">
           <h3>2. Discount vs profit</h3>
           <figure class="viz-figure" data-viz="discount-profit" data-tool="altair">
-            <div class="viz-placeholder" role="img" aria-label="Placeholder for discount vs profit scatter">
-              <p><strong>Embed:</strong> Altair scatter: discount on x, profit on y. Optional color by category or region.</p>
-              <p class="hint">Lots of points: try opacity or jitter. Horizontal line at profit = 0 helps.</p>
+            <div class="viz-placeholder" role="img" aria-label="Discount rate versus profit by category">
+              <div id="viz2_container" class="chart-container"></div>
             </div>
             <figcaption class="takeaway">
-              <strong>Takeaway:</strong> You can see if high discounts line up with low or negative profit. Not every
-              discount is bad, but big clusters of deep discount and negative profit are a red flag for pricing.
+              <strong>Takeaway:</strong> There is a clear negative relationship between discount rate and profit at the
+              order-line level. Orders with discounts above about 20% frequently fall below the break-even line, and
+              Furniture shows the highest concentration of deeply discounted, loss-making orders.
             </figcaption>
           </figure>
         </article>
@@ -134,13 +138,13 @@
         <article id="viz-compare" class="viz-block">
           <h3>3. Category and region</h3>
           <figure class="viz-figure" data-viz="category-region" data-tool="altair">
-            <div class="viz-placeholder" role="img" aria-label="Placeholder for category or region bar chart">
-              <p><strong>Embed:</strong> Bar chart(s): total or average profit by region and/or category, sorted so worst/best are easy to see.</p>
-              <p class="hint">Try to use similar colors as chart 1 so the page looks consistent.</p>
+            <div class="viz-placeholder" role="img" aria-label="Profit by sub-category and region">
+              <div id="viz3_container" class="chart-container"></div>
             </div>
             <figcaption class="takeaway">
-              <strong>Takeaway:</strong> This step shows which regions and categories make money and which do not. It also
-              helps us choose which subgroup to focus on in charts 4 and 5.
+              <strong>Takeaway:</strong> Technology sub-categories dominate profit, while Tables and Bookcases in the
+              Furniture category are structural loss-makers across most regions — especially Central and East. The
+              region dropdown helps isolate where the problems are strongest.
             </figcaption>
           </figure>
         </article>
@@ -148,13 +152,13 @@
         <article id="viz-subgroup" class="viz-block">
           <h3>4. Subgroup focus</h3>
           <figure class="viz-figure" data-viz="subgroup" data-tool="altair-or-static">
-            <div class="viz-placeholder" role="img" aria-label="Placeholder for subgroup highlight chart">
-              <p><strong>Embed:</strong> One focused chart for a bad segment (example: Furniture in Central, or high discount orders). Sales vs profit or similar.</p>
-              <p class="hint">Match whatever subgroup we actually pick in the analysis.</p>
+            <div class="viz-placeholder" role="img" aria-label="Furniture sales and profit by sub-category and region">
+              <div id="viz4_container" class="chart-container"></div>
             </div>
             <figcaption class="takeaway">
-              <strong>Takeaway:</strong> Zooms in on one place where sales and profit do not match. Sets up the D3 chart
-              to explain that slice in more detail.
+              <strong>Takeaway:</strong> Tables stand out as the clearest problem case: they generate substantial sales
+              volume across all regions, yet often produce negative profit. Bookcases show a similar pattern on a
+              smaller scale. This disconnect between sales and profit points to excessive discounting as a key driver of losses.
             </figcaption>
           </figure>
         </article>
@@ -162,13 +166,18 @@
         <article id="viz-deep-dive" class="viz-block">
           <h3>5. Deep dive (D3)</h3>
           <figure class="viz-figure" data-viz="deep-dive" data-tool="d3">
-            <div class="viz-placeholder viz-placeholder--d3" role="img" aria-label="Placeholder for D3 interactive chart">
-              <p><strong>Embed:</strong> D3 chart: e.g. linked views, brush on a scatter, or bars filtered by region/category inside the subgroup.</p>
-              <p class="hint">Ryan: script in <code>js/</code>. Class needs at least three interaction types on the site total (not only here).</p>
+            <div class="viz-placeholder viz-placeholder--d3" role="img" aria-label="D3 deep-dive interactive chart for furniture losses">
+              <iframe
+                src="viz5_d3.html"
+                title="Deep Dive: Why Do Furniture Tables &amp; Bookcases Lose Money?"
+                style="width: 100%; height: 560px; border: none; border-radius: 6px;"
+              ></iframe>
             </div>
             <figcaption class="takeaway">
-              <strong>Takeaway:</strong> Lets readers explore that subgroup (states, ship mode, discount bins, etc.).
-              The point is to answer questions about the data, not just to animate things for fun.
+              <strong>Takeaway:</strong> Readers can filter by region or sub-category and then brush the scatter plot to
+              select a discount range. The bar chart on the right updates to show how profit breaks down by shipping
+              mode within that selection — revealing that heavily discounted Standard Class furniture orders account
+              for a large share of the losses.
             </figcaption>
           </figure>
         </article>
@@ -215,5 +224,16 @@
   </footer>
 
   <script src="js/main.js"></script>
+  <script>
+    (function() {
+      var embedOpts = { renderer: "svg", actions: false };
+      if (window.vegaEmbed) {
+        vegaEmbed("#viz1_container", "viz1_time_series.json", embedOpts).catch(console.error);
+        vegaEmbed("#viz2_container", "viz2_discount_profit.json", embedOpts).catch(console.error);
+        vegaEmbed("#viz3_container", "viz3_category_region.json", embedOpts).catch(console.error);
+        vegaEmbed("#viz4_container", "viz4_subgroup_focus.json", embedOpts).catch(console.error);
+      }
+    })();
+  </script>
 </body>
 </html>
