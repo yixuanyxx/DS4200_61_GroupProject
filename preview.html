@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DS4200 – Superstore Preview</title>
+  <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+  <style>
+    :root {
+      --teal:  #2A9D8F;
+      --dark:  #1D3557;
+      --gray:  #A8AAAD;
+      --bg:    #F8F9FA;
+      --white: #FFFFFF;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Helvetica Neue", sans-serif;
+      background: var(--bg);
+      color: var(--dark);
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--dark);
+      color: white;
+      padding: 28px 40px;
+    }
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    header p {
+      font-size: 0.88rem;
+      opacity: 0.7;
+    }
+
+    nav {
+      display: flex;
+      gap: 12px;
+      padding: 16px 40px;
+      background: var(--white);
+      border-bottom: 1px solid #e0e0e0;
+      flex-wrap: wrap;
+    }
+    nav a {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--teal);
+      text-decoration: none;
+      padding: 4px 12px;
+      border: 1.5px solid var(--teal);
+      border-radius: 20px;
+      transition: background 0.2s;
+    }
+    nav a:hover { background: var(--teal); color: white; }
+
+    main { padding: 40px; max-width: 1100px; margin: 0 auto; }
+
+    .viz-section {
+      background: var(--white);
+      border-radius: 10px;
+      padding: 28px 32px;
+      margin-bottom: 40px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+    }
+
+    .viz-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--teal);
+      margin-bottom: 6px;
+    }
+
+    .viz-section h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 6px;
+    }
+
+    .takeaway {
+      font-size: 0.84rem;
+      color: #555;
+      line-height: 1.65;
+      margin-bottom: 20px;
+      border-left: 3px solid var(--teal);
+      padding-left: 12px;
+    }
+
+    .chart-container {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    /* Viz 5 iframe */
+    .d3-frame {
+      width: 100%;
+      height: 560px;
+      border: none;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h1>Unboxing the Retail Pulse</h1>
+  <p>DS4200 Group Project · Yuansi, Yixuan, Ryan · Preview (local)</p>
+</header>
+
+<nav>
+  <a href="#viz1">Viz 1 · Over Time</a>
+  <a href="#viz2">Viz 2 · Discount vs Profit</a>
+  <a href="#viz3">Viz 3 · Category & Region</a>
+  <a href="#viz4">Viz 4 · Subgroup Focus</a>
+  <a href="#viz5">Viz 5 · D3 Deep Dive</a>
+</nav>
+
+<main>
+
+  <!-- VIZ 1 -->
+  <div class="viz-section" id="viz1">
+    <div class="viz-label">Visualization 1 · Overview</div>
+    <h2>Monthly Sales and Profit Over Time (2014–2017)</h2>
+    <p class="takeaway">
+      Sales and profit both grow year-over-year, with clear Q4 seasonality every year.
+      However, profit consistently lags behind sales — suggesting that revenue growth
+      alone does not guarantee profitability, and that discount-driven sales may be
+      eroding margins.
+    </p>
+    <div class="chart-container" id="v1"></div>
+  </div>
+
+  <!-- VIZ 2 -->
+  <div class="viz-section" id="viz2">
+    <div class="viz-label">Visualization 2 · Key Relationship</div>
+    <h2>Discount Rate vs. Profit by Category</h2>
+    <p class="takeaway">
+      There is a clear negative relationship between discount rate and profit at the
+      order-line level. Orders with discounts above 20% frequently fall below the
+      break-even line, and Furniture shows the highest concentration of deeply
+      discounted, loss-making orders. Click a category in the legend to highlight it.
+    </p>
+    <div class="chart-container" id="v2"></div>
+  </div>
+
+  <!-- VIZ 3 -->
+  <div class="viz-section" id="viz3">
+    <div class="viz-label">Visualization 3 · Category & Region</div>
+    <h2>Profit by Sub-Category and Region</h2>
+    <p class="takeaway">
+      Technology sub-categories dominate profit, while Tables and Bookcases in the
+      Furniture category are structural loss-makers across all regions — especially
+      Central and East. Use the dropdown to isolate a specific region and compare
+      performance within it.
+    </p>
+    <div class="chart-container" id="v3"></div>
+  </div>
+
+  <!-- VIZ 4 -->
+  <div class="viz-section" id="viz4">
+    <div class="viz-label">Visualization 4 · Subgroup Focus</div>
+    <h2>Furniture: Sales vs. Profit by Sub-Category and Region</h2>
+    <p class="takeaway">
+      Tables stand out as the clearest problem case: they generate substantial sales
+      volume across all regions, yet consistently produce negative profit. Bookcases
+      show a similar pattern on a smaller scale. This disconnect between sales and
+      profit points directly to excessive discounting as the primary driver of losses.
+    </p>
+    <div class="chart-container" id="v4"></div>
+  </div>
+
+  <!-- VIZ 5 -->
+  <div class="viz-section" id="viz5">
+    <div class="viz-label">Visualization 5 · D3 Deep Dive</div>
+    <h2>Why Do Furniture Tables & Bookcases Lose Money?</h2>
+    <p class="takeaway">
+      Use the dropdowns to filter by region or sub-category, then brush the scatter
+      plot to select a discount range. The bar chart on the right updates instantly
+      to show how profit breaks down by shipping mode within that selection —
+      revealing that Standard Class orders with high discounts account for the
+      bulk of losses.
+    </p>
+    <iframe class="d3-frame" src="viz5_d3.html"></iframe>
+  </div>
+
+</main>
+
+<script>
+  const opt = { renderer: "svg", actions: false };
+  vegaEmbed("#v1", "viz1_time_series.json",    opt).catch(console.error);
+  vegaEmbed("#v2", "viz2_discount_profit.json", opt).catch(console.error);
+  vegaEmbed("#v3", "viz3_category_region.json", opt).catch(console.error);
+  vegaEmbed("#v4", "viz4_subgroup_focus.json",  opt).catch(console.error);
+</script>
+
+</body>
+</html>
