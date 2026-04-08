@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Viz 5 – Furniture Deep Dive (D3)</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    :root {
+      --teal:      #2A9D8F;
+      --steel:     #457B9D;
+      --orange:    #E76F51;
+      --red:       #E63946;
+      --gray:      #A8AAAD;
+      --dark:      #1D3557;
+      --bg:        #F8F9FA;
+      --white:     #FFFFFF;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Helvetica Neue", sans-serif;
+      background: var(--bg);
+      color: var(--dark);
+      padding: 24px 32px;
+    }
+
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 4px;
+    }
+    .subtitle {
+      font-size: 0.85rem;
+      color: var(--gray);
+      margin-bottom: 18px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .controls label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--dark);
+      margin-right: 4px;
+    }
+    .controls select {
+      font-size: 0.82rem;
+      padding: 4px 8px;
+      border: 1px solid var(--gray);
+      border-radius: 4px;
+      background: var(--white);
+      color: var(--dark);
+      cursor: pointer;
+    }
+    .hint {
+      font-size: 0.78rem;
+      color: var(--gray);
+      font-style: italic;
+    }
+
+    #charts {
+      display: flex;
+      gap: 32px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+
+    .chart-box {
+      background: var(--white);
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .chart-title {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--dark);
+      margin-bottom: 8px;
+    }
+
+    #tooltip {
+      position: fixed;
+      background: var(--white);
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-size: 0.78rem;
+      color: var(--dark);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+      max-width: 220px;
+      line-height: 1.6;
+      z-index: 999;
+    }
+
+    .selection { fill: var(--steel); fill-opacity: 0.15; stroke: var(--steel); stroke-width: 1; }
+
+    .axis text { font-size: 0.72rem; fill: #555; }
+    .axis path, .axis line { stroke: #ccc; }
+    .axis-label { font-size: 0.78rem; fill: var(--dark); font-weight: 600; }
+
+
+
+    .zero-line { stroke: var(--red); stroke-dasharray: 5,3; stroke-width: 1.5; opacity: 0.8; }
+
+    .legend-item text { font-size: 0.78rem; fill: var(--dark); }
+  </style>
+</head>
+
+<body>
+
+<h2>Deep Dive: Why Do Furniture Tables & Bookcases Lose Money?</h2>
+<p class="subtitle">
+  Explore how discount rate, ship mode, and sub-category combine to drive losses in Furniture.
+  <strong>Brush the scatter plot</strong> to filter the bar chart on the right.
+</p>
+
+<div class="controls">
+  <div>
+    <label for="regionSel">Region:</label>
+    <select id="regionSel">
+      <option value="all">All Regions</option>
+      <option value="Central">Central</option>
+      <option value="East">East</option>
+      <option value="South">South</option>
+      <option value="West">West</option>
+    </select>
+  </div>
+  <div>
+    <label for="subCatSel">Sub-Category:</label>
+    <select id="subCatSel">
+      <option value="all">All Furniture</option>
+      <option value="Tables">Tables</option>
+      <option value="Bookcases">Bookcases</option>
+      <option value="Chairs">Chairs</option>
+      <option value="Furnishings">Furnishings</option>
+    </select>
+  </div>
+  <span class="hint">💡 Brush the scatter to filter the bar chart</span>
+</div>
+
+<div id="charts">
+  <div class="chart-box">
+    <div class="chart-title">Discount vs. Profit (each dot = 1 order line)</div>
+    <svg id="scatter"></svg>
+  </div>
+  <div class="chart-box">
+    <div class="chart-title">Total Profit by Ship Mode (brushed selection)</div>
+    <svg id="bar"></svg>
+  </div>
+</div>
+
+<div id="tooltip"></div>
+
+<script>
+const SM = { top: 30, right: 20, bottom: 55, left: 65 };
+const SW = 480, SH = 380;
+const BM = { top: 30, right: 20, bottom: 55, left: 110 };
+const BW = 320, BH = 380;
+
+const svgS = d3.select("#scatter").attr("width", SW + SM.left + SM.right)
+                                   .attr("height", SH + SM.top + SM.bottom);
+const svgB = d3.select("#bar").attr("width", BW + BM.left + BM.right)
+                                .attr("height", BH + BM.top + BM.bottom);
+
+const gS = svgS.append("g").attr("transform", `translate(${SM.left},${SM.top})`);
+const gB = svgB.append("g").attr("transform", `translate(${BM.left},${BM.top})`);
+
+const subCatColor = d3.scaleOrdinal()
+  .domain(["Tables","Bookcases","Chairs","Furnishings"])
+  .range(["#E63946","#E76F51","#2A9D8F","#457B9D"]);
+
+const shipColor = d3.scaleOrdinal()
+  .domain(["Standard Class","Second Class","First Class","Same Day"])
+  .range(["#457B9D","#2A9D8F","#F4A261","#E76F51"]);
+
+const tip = d3.select("#tooltip");
+function showTip(html, event) {
+  tip.html(html).style("opacity", 1)
+     .style("left", (event.clientX + 14) + "px")
+     .style("top",  (event.clientY - 28) + "px");
+}
+function hideTip() { tip.style("opacity", 0); }
+
+let allData = [];
+let brushedData = null;
+
+d3.csv("superstore_clean.csv").then(raw => {
+
+  allData = raw
+    .filter(d => d["Category"] === "Furniture")
+    .map(d => ({
+      subCat:   d["Sub-Category"],
+      region:   d["Region"],
+      shipMode: d["Ship Mode"],
+      discount: +d["Discount"],
+      profit:   +d["Profit"],
+      sales:    +d["Sales"],
+      product:  d["Product Name"],
+      state:    d["State"],
+    }));
+
+  render();
+});
+
+function getFiltered() {
+  const region = document.getElementById("regionSel").value;
+  const subCat = document.getElementById("subCatSel").value;
+  return allData.filter(d =>
+    (region === "all" || d.region === region) &&
+    (subCat === "all" || d.subCat === subCat)
+  );
+}
+
+function render() {
+  const data = getFiltered();
+  brushedData = null;
+  drawScatter(data);
+  drawBar(data);
+}
+
+function drawScatter(data) {
+  gS.selectAll("*").remove();
+
+  const jittered = data.map(d => ({
+    ...d,
+    discountJ: d.discount + (Math.random() - 0.5) * 0.036
+  }));
+
+  const xS = d3.scaleLinear().domain([-0.05, 0.85]).range([0, SW]);
+  const yS = d3.scaleLinear().domain([-2000, 2500]).range([SH, 0]).clamp(true);
+
+  gS.append("g").attr("class","axis").attr("transform",`translate(0,${SH})`)
+    .call(d3.axisBottom(xS).tickFormat(d3.format(".0%")).ticks(9));
+  gS.append("g").attr("class","axis")
+    .call(d3.axisLeft(yS).tickFormat(d3.format("$,.0f")).ticks(8));
+
+  gS.append("text").attr("class","axis-label")
+    .attr("x", SW/2).attr("y", SH + 45).attr("text-anchor","middle")
+    .text("Discount Rate");
+  gS.append("text").attr("class","axis-label")
+    .attr("transform","rotate(-90)")
+    .attr("x", -SH/2).attr("y", -52).attr("text-anchor","middle")
+    .text("Profit (USD)");
+
+  gS.append("line").attr("class","zero-line")
+    .attr("x1", 0).attr("x2", SW)
+    .attr("y1", yS(0)).attr("y2", yS(0));
+
+  gS.append("text").attr("x", SW - 4).attr("y", yS(0) - 6)
+    .attr("text-anchor","end").attr("font-size","0.7rem")
+    .attr("fill","#E63946").attr("font-style","italic")
+    .text("Break-even");
+
+  const dots = gS.append("g").selectAll("circle").data(jittered).join("circle")
+    .attr("cx", d => xS(d.discountJ))
+    .attr("cy", d => yS(d.profit))
+    .attr("r", 4)
+    .attr("fill", d => subCatColor(d.subCat))
+    .attr("opacity", 0.55)
+    .attr("stroke","white").attr("stroke-width", 0.5)
+    .style("cursor","crosshair");
+
+  dots.on("mouseover", (event, d) => {
+      showTip(`
+        <strong>${d.product.slice(0,35)}…</strong><br>
+        Sub-Category: ${d.subCat}<br>
+        Region: ${d.region} | ${d.state}<br>
+        Ship Mode: ${d.shipMode}<br>
+        Discount: ${d3.format(".0%")(d.discount)}<br>
+        Profit: ${d3.format("$,.2f")(d.profit)}<br>
+        Sales: ${d3.format("$,.2f")(d.sales)}
+      `, event);
+    })
+    .on("mousemove", (event) => {
+      tip.style("left",(event.clientX+14)+"px").style("top",(event.clientY-28)+"px");
+    })
+    .on("mouseout", hideTip);
+
+  const legendData = ["Tables","Bookcases","Chairs","Furnishings"];
+  const legend = gS.append("g").attr("transform",`translate(0, -22)`);
+  legendData.forEach((s, i) => {
+    const lg = legend.append("g").attr("class","legend-item")
+      .attr("transform",`translate(${i * 115}, 0)`);
+    lg.append("circle").attr("r", 5).attr("fill", subCatColor(s)).attr("cy", 0);
+    lg.append("text").attr("x", 9).attr("dy","0.35em").text(s);
+  });
+
+  const brush = d3.brush()
+    .extent([[0, 0], [SW, SH]])
+    .on("brush end", ({ selection }) => {
+      if (!selection) {
+        brushedData = null;
+        dots.attr("opacity", 0.55);
+        drawBar(data);
+        return;
+      }
+      const [[x0,y0],[x1,y1]] = selection;
+      const selected = jittered.filter(d =>
+        xS(d.discountJ) >= x0 && xS(d.discountJ) <= x1 &&
+        yS(d.profit)    >= y0 && yS(d.profit)    <= y1
+      );
+      brushedData = selected;
+      dots.attr("opacity", d =>
+        selected.includes(d) ? 0.85 : 0.1
+      );
+      drawBar(selected);
+    });
+
+  gS.append("g").attr("class","brush").call(brush);
+}
+
+//bar chart
+function drawBar(data) {
+  gB.selectAll("*").remove();
+
+  const shipModes = ["Standard Class","Second Class","First Class","Same Day"];
+
+  const agg = shipModes.map(sm => {
+    const rows = data.filter(d => d.shipMode === sm);
+    return {
+      shipMode: sm,
+      profit: d3.sum(rows, d => d.profit),
+      count:  rows.length
+    };
+  });
+
+  const xB = d3.scaleLinear()
+    .domain([d3.min(agg, d => d.profit) * 1.1, d3.max(agg, d => d.profit) * 1.1])
+    .range([0, BW]).nice();
+
+  const yB = d3.scaleBand()
+    .domain(shipModes)
+    .range([0, BH])
+    .padding(0.35);
+
+  // Axes
+  gB.append("g").attr("class","axis").attr("transform",`translate(0,${BH})`)
+    .call(d3.axisBottom(xB).tickFormat(d3.format("$,.0f")).ticks(5));
+  gB.append("g").attr("class","axis").call(d3.axisLeft(yB));
+
+  // Axis label
+  gB.append("text").attr("class","axis-label")
+    .attr("x", BW/2).attr("y", BH + 45).attr("text-anchor","middle")
+    .text("Total Profit (USD)");
+
+  // Zero line
+  gB.append("line").attr("class","zero-line")
+    .attr("x1", xB(0)).attr("x2", xB(0))
+    .attr("y1", 0).attr("y2", BH);
+
+  // Bars
+  gB.selectAll("rect").data(agg).join("rect")
+    .attr("x", d => d.profit >= 0 ? xB(0) : xB(d.profit))
+    .attr("y", d => yB(d.shipMode))
+    .attr("width", d => Math.abs(xB(d.profit) - xB(0)))
+    .attr("height", yB.bandwidth())
+    .attr("fill", d => d.profit >= 0 ? "#2A9D8F" : "#E63946")
+    .attr("rx", 3)
+    .attr("opacity", 0.85)
+    .on("mouseover", (event, d) => {
+      showTip(`
+        <strong>${d.shipMode}</strong><br>
+        Total Profit: ${d3.format("$,.0f")(d.profit)}<br>
+        Order Lines: ${d.count}
+      `, event);
+    })
+    .on("mousemove", (event) => {
+      tip.style("left",(event.clientX+14)+"px").style("top",(event.clientY-28)+"px");
+    })
+    .on("mouseout", hideTip);
+
+  gB.selectAll(".bar-label").data(agg).join("text")
+    .attr("class","bar-label")
+    .attr("x", d => d.profit >= 0 ? xB(d.profit) + 4 : xB(d.profit) - 4)
+    .attr("y", d => yB(d.shipMode) + yB.bandwidth()/2)
+    .attr("dy","0.35em")
+    .attr("text-anchor", d => d.profit >= 0 ? "start" : "end")
+    .attr("font-size","0.72rem")
+    .attr("fill", "#333")
+    .text(d => d3.format("$,.0f")(d.profit));
+
+  if (data.length === 0) {
+    gB.append("text").attr("x", BW/2).attr("y", BH/2)
+      .attr("text-anchor","middle").attr("fill",var_gray).attr("font-size","0.85rem")
+      .text("No data in selection");
+  }
+}
+
+document.getElementById("regionSel").addEventListener("change", render);
+document.getElementById("subCatSel").addEventListener("change", render);
+</script>
+</body>
+</html>
