@@ -1,112 +1,121 @@
-"""
-DS4200 Group Project — Viz 3: Category & Region Profit Comparison
-Author: Yuansi Jiang
-
-Narrative beat : "Where do we win or lose structurally?"
-Chart type     : Faceted horizontal bar chart (one panel per Category)
-                 Bars sorted by profit, colored red/teal by profit sign
-Interactions   : Region dropdown filter + hover tooltip
-Output         : viz3_category_region.json  ← Ryan embeds this in index.html
-
-Also prints: recommended subgroup for Ryan's D3 deep dive (Viz 5)
-
-Usage:
-    python data_cleaning.py        # run first to generate superstore_clean.csv
-    python viz3_category_region.py
-"""
-
 import pandas as pd
 import altair as alt
 
 INPUT_FILE  = "superstore_clean.csv"
 OUTPUT_FILE = "viz3_category_region.json"
 
-TEAL      = "#2A9D8F"
-LOSS_RED  = "#E63946"
 GRAY      = "#A8AAAD"
 DARK_BLUE = "#1D3557"
 
+STATE_FIPS = {
+    'Alabama': 1, 'Alaska': 2, 'Arizona': 4, 'Arkansas': 5, 'California': 6,
+    'Colorado': 8, 'Connecticut': 9, 'Delaware': 10, 'Florida': 12, 'Georgia': 13,
+    'Hawaii': 15, 'Idaho': 16, 'Illinois': 17, 'Indiana': 18, 'Iowa': 19,
+    'Kansas': 20, 'Kentucky': 21, 'Louisiana': 22, 'Maine': 23, 'Maryland': 24,
+    'Massachusetts': 25, 'Michigan': 26, 'Minnesota': 27, 'Mississippi': 28,
+    'Missouri': 29, 'Montana': 30, 'Nebraska': 31, 'Nevada': 32, 'New Hampshire': 33,
+    'New Jersey': 34, 'New Mexico': 35, 'New York': 36, 'North Carolina': 37,
+    'North Dakota': 38, 'Ohio': 39, 'Oklahoma': 40, 'Oregon': 41, 'Pennsylvania': 42,
+    'Rhode Island': 44, 'South Carolina': 45, 'South Dakota': 46, 'Tennessee': 47,
+    'Texas': 48, 'Utah': 49, 'Vermont': 50, 'Virginia': 51, 'Washington': 53,
+    'West Virginia': 54, 'Wisconsin': 55, 'Wyoming': 56, 'District of Columbia': 11
+}
 
-df = pd.read_csv(INPUT_FILE, parse_dates=["Month", "Order Date"])
+df = pd.read_csv(INPUT_FILE)
+df['fips'] = df['State'].map(STATE_FIPS)
 
+fur_subcats = sorted(df[df['Category']=='Furniture']['Sub-Category'].unique().tolist())
+off_subcats = sorted(df[df['Category']=='Office Supplies']['Sub-Category'].unique().tolist())
+tec_subcats = sorted(df[df['Category']=='Technology']['Sub-Category'].unique().tolist())
+all_subcats = fur_subcats + off_subcats + tec_subcats
 
-cat_region = (
-    df.groupby(["Category", "Sub-Category", "Region"], as_index=False)
-    .agg(
-        TotalProfit  = ("Profit",   "sum"),
-        TotalSales   = ("Sales",    "sum"),
-        AvgDiscount  = ("Discount", "mean"),
-        OrderCount   = ("Order ID", "count"),
+# Build wide format: one row per state
+rows = []
+for state, g in df.groupby('State'):
+    row = {
+        'State': state,
+        'fips': int(g['fips'].iloc[0]),
+        'All': round(g['Profit'].sum(), 2),
+        'Furniture': round(g[g['Category']=='Furniture']['Profit'].sum(), 2),
+        'Office_Supplies': round(g[g['Category']=='Office Supplies']['Profit'].sum(), 2),
+        'Technology': round(g[g['Category']=='Technology']['Profit'].sum(), 2),
+    }
+    for subcat in all_subcats:
+        row[subcat] = round(g[g['Sub-Category']==subcat]['Profit'].sum(), 2)
+    rows.append(row)
+
+states_wide = pd.DataFrame(rows).fillna(0)
+
+# ── Single dropdown with all options ─────────────────────────────────────────
+options = ['All', 'Furniture', 'Office_Supplies', 'Technology'] + all_subcats
+labels  = [
+    'All Categories',
+    'Furniture',
+    'Office Supplies',
+    'Technology',
+] + \
+    [f'  Furniture › {s}' for s in fur_subcats] + \
+    [f'  Office Supplies › {s}' for s in off_subcats] + \
+    [f'  Technology › {s}' for s in tec_subcats]
+
+sel = alt.param(
+    name='sel', value='All',
+    bind=alt.binding_select(
+        options=options,
+        labels=labels,
+        name='Filter: '
     )
 )
-cat_region["ProfitSign"] = cat_region["TotalProfit"].apply(
-    lambda x: "Profit" if x >= 0 else "Loss"
+
+# ── Map ───────────────────────────────────────────────────────────────────────
+TOPO_URL = 'https://cdn.jsdelivr.net/npm/vega-datasets@2/data/us-10m.json'
+lookup_fields = ['State', 'All', 'Furniture', 'Office_Supplies', 'Technology'] + all_subcats
+
+background = (
+    alt.Chart(alt.topo_feature(TOPO_URL, 'states'))
+    .mark_geoshape(fill='#e0e0e0', stroke='white', strokeWidth=0.5)
+    .project('albersUsa')
+    .properties(width=720, height=440)
 )
 
-
-# Interaction 1: Region dropdown filter
-region_filter = alt.selection_point(
-    fields=["Region"],
-    bind=alt.binding_select(
-        options=[None, "East", "West", "Central", "South"],
-        labels=["All Regions", "East", "West", "Central", "South"],
-        name="Filter by Region: "
-    ),
-    value=None
-)
-
-bars = (
-    alt.Chart(cat_region)
-    .mark_bar(cornerRadiusTopRight=3, cornerRadiusBottomRight=3)
+choropleth = (
+    alt.Chart(alt.topo_feature(TOPO_URL, 'states'))
+    .mark_geoshape(stroke='white', strokeWidth=0.5)
+    .transform_lookup(
+        lookup='id',
+        from_=alt.LookupData(states_wide, 'fips', lookup_fields)
+    )
+    .transform_calculate(SelectedProfit="datum[sel]")
     .encode(
-        x=alt.X(
-            "TotalProfit:Q",
-            title="Total Profit (USD)",
-            axis=alt.Axis(format="$,.0f")
-        ),
-        y=alt.Y(
-            "Sub-Category:N",
-            sort="-x",
-            title=None
-        ),
         color=alt.Color(
-            "ProfitSign:N",
-            scale=alt.Scale(domain=["Profit", "Loss"], range=[TEAL, LOSS_RED]),
-            title="Result",
-            legend=alt.Legend(orient="bottom")
+            'SelectedProfit:Q',
+            title='Net Profit (USD)',
+            scale=alt.Scale(scheme='redyellowgreen', domainMid=0),
+            legend=alt.Legend(orient='bottom', gradientLength=300,
+                              titleFontSize=11, labelFontSize=10)
         ),
-        # Interaction 2: Hover tooltip
         tooltip=[
-            alt.Tooltip("Sub-Category:N", title="Sub-Category"),
-            alt.Tooltip("Category:N",     title="Category"),
-            alt.Tooltip("Region:N",       title="Region"),
-            alt.Tooltip("TotalProfit:Q",  title="Total Profit",  format="$,.0f"),
-            alt.Tooltip("TotalSales:Q",   title="Total Sales",   format="$,.0f"),
-            alt.Tooltip("AvgDiscount:Q",  title="Avg Discount",  format=".1%"),
-            alt.Tooltip("OrderCount:Q",   title="Order Lines",   format=","),
+            alt.Tooltip('State:N',          title='State'),
+            alt.Tooltip('SelectedProfit:Q', title='Net Profit', format='$,.0f'),
         ]
     )
-    .add_params(region_filter)
-    .transform_filter(region_filter)
-    .properties(width=200, height=180)
-    .facet(
-        facet=alt.Facet("Category:N", title=None, header=alt.Header(labelFontSize=13, labelFontWeight="bold")),
-        columns=3
-    )
-    .resolve_scale(y="independent", x="shared")
-    .properties(
-        title=alt.TitleParams(
-            "Profit by Sub-Category and Region",
-            subtitle="Tables and Bookcases (Furniture) are structural loss-makers — especially in Central & East",
-            fontSize=16,
-            subtitleFontSize=12,
-            color=DARK_BLUE,
-            subtitleColor=GRAY,
-        )
-    )
+    .add_params(sel)
+    .project('albersUsa')
+    .properties(width=720, height=440)
 )
 
-viz3 = bars.configure_view(stroke=GRAY, strokeWidth=0.5)
+(
+    (background + choropleth)
+    .properties(
+        title=alt.TitleParams(
+            'Net Profit by State',
+            subtitle='Filter by category or sub-category — red = loss, green = gain',
+            fontSize=16, subtitleFontSize=12,
+            color=DARK_BLUE, subtitleColor=GRAY,
+        )
+    )
+    .configure_view(strokeWidth=0)
+    .configure_legend(titleFontSize=11, labelFontSize=10)
+).save(OUTPUT_FILE)
 
-
-viz3.save(OUTPUT_FILE)
+print("saved", OUTPUT_FILE)

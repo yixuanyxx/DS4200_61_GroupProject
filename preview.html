@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>DS4200 – Superstore Preview</title>
-  <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega@5.30.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.20.1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.26.0"></script>
   <style>
     :root {
       --teal:  #2A9D8F;
@@ -40,6 +40,7 @@
       opacity: 0.7;
     }
 
+    /* ── Nav dots ── */
     nav {
       display: flex;
       gap: 12px;
@@ -60,6 +61,7 @@
     }
     nav a:hover { background: var(--teal); color: white; }
 
+    /* ── Sections ── */
     main { padding: 40px; max-width: 1100px; margin: 0 auto; }
 
     .viz-section {
@@ -156,12 +158,12 @@
   <!-- VIZ 3 -->
   <div class="viz-section" id="viz3">
     <div class="viz-label">Visualization 3 · Category & Region</div>
-    <h2>Profit by Sub-Category and Region</h2>
+    <h2>Net Profit by State</h2>
     <p class="takeaway">
-      Technology sub-categories dominate profit, while Tables and Bookcases in the
-      Furniture category are structural loss-makers across all regions — especially
-      Central and East. Use the dropdown to isolate a specific region and compare
-      performance within it.
+      Profit varies significantly across states — California and New York lead,
+      while Texas, Ohio, and Pennsylvania show heavy losses. Use the Category dropdown
+      to filter by product category, then drill into a specific Sub-Category to see
+      how performance shifts geographically.
     </p>
     <div class="chart-container" id="v3"></div>
   </div>
@@ -169,12 +171,12 @@
   <!-- VIZ 4 -->
   <div class="viz-section" id="viz4">
     <div class="viz-label">Visualization 4 · Subgroup Focus</div>
-    <h2>Furniture: Sales vs. Profit by Sub-Category and Region</h2>
+    <h2>Does Ship Mode Affect Profit at the Same Price Point?</h2>
     <p class="takeaway">
-      Tables stand out as the clearest problem case: they generate substantial sales
-      volume across all regions, yet consistently produce negative profit. Bookcases
-      show a similar pattern on a smaller scale. This disconnect between sales and
-      profit points directly to excessive discounting as the primary driver of losses.
+      Across all three categories, Standard Class shipping combined with heavy discounts
+      produces the worst average profit — shown in deep red. Furniture sub-categories
+      like Tables and Furnishings are consistently loss-making regardless of ship mode,
+      while Technology sub-categories remain profitable even under Standard Class.
     </p>
     <div class="chart-container" id="v4"></div>
   </div>
@@ -184,11 +186,11 @@
     <div class="viz-label">Visualization 5 · D3 Deep Dive</div>
     <h2>Why Do Furniture Tables & Bookcases Lose Money?</h2>
     <p class="takeaway">
-      Use the dropdowns to filter by region or sub-category, then brush the scatter
-      plot to select a discount range. The bar chart on the right updates instantly
-      to show how profit breaks down by shipping mode within that selection —
-      revealing that Standard Class orders with high discounts account for the
-      bulk of losses.
+      This Sankey diagram traces how orders flow from ship mode through discount level
+      to their final outcome (profit or loss). Standard Class with discounts above 20%
+      is the dominant loss pathway. Use the Category dropdown to compare categories,
+      and drag the discount slider to see how losses accumulate as higher discounts
+      are included. Click any node to focus on its connected flows.
     </p>
     <iframe class="d3-frame" src="viz5_d3.html"></iframe>
   </div>
@@ -196,11 +198,23 @@
 </main>
 
 <script>
-  const opt = { renderer: "svg", actions: false };
-  vegaEmbed("#v1", "viz1_time_series.json",    opt).catch(console.error);
-  vegaEmbed("#v2", "viz2_discount_profit.json", opt).catch(console.error);
-  vegaEmbed("#v3", "viz3_category_region.json", opt).catch(console.error);
-  vegaEmbed("#v4", "viz4_subgroup_focus.json",  opt).catch(console.error);
+  const t = Date.now();
+  const opt = { actions: false };
+
+  function embedChart(id, file) {
+    const el = document.getElementById(id);
+    vegaEmbed("#" + id, file + "?t=" + t, opt)
+      .then(() => { el.style.border = "none"; })
+      .catch(err => {
+        el.innerHTML = '<p style="color:red;padding:12px">Error loading ' + file + ': ' + err.message + '</p>';
+        console.error(id, err);
+      });
+  }
+
+  embedChart("v1",  "viz1_time_series.json");
+  embedChart("v2",  "viz2_discount_profit.json");
+  embedChart("v3",  "viz3_category_region.json");
+  embedChart("v4",  "viz4_subgroup_focus.json");
 </script>
 
 </body>

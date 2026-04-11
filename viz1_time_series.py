@@ -1,26 +1,12 @@
-"""
-DS4200 Group Project — Viz 1: Sales & Profit Over Time
-Author: Yuansi (Person 1)
-
-Narrative beat : "When is the business healthy across time?"
-Chart type     : Dual-line time series (monthly aggregation)
-Interactions   : Year dropdown filter + hover tooltip
-Output         : viz1_time_series.json
-
-Usage:
-    python data_cleaning.py
-    python viz1_time_series.py
-"""
-
 import pandas as pd
 import altair as alt
 
 INPUT_FILE  = "superstore_clean.csv"
 OUTPUT_FILE = "viz1_time_series.json"
 
-TEAL      = "#2A9D8F"
-STEEL     = "#457B9D"
-LOSS_RED  = "#E63946"
+BLUE      = "#457B9D"
+ORANGE    = "#E76F51"
+GREEN     = "#2A9D8F"
 GRAY      = "#A8AAAD"
 DARK_BLUE = "#1D3557"
 
@@ -30,42 +16,56 @@ monthly = (
     df.groupby(["Month", "Year"], as_index=False)
     .agg(Sales=("Sales", "sum"), Profit=("Profit", "sum"))
 )
+monthly["MonthIndex"] = (monthly["Year"] - 2014) * 12 + monthly["Month"].dt.month
 
 monthly_long = monthly.melt(
-    id_vars=["Month", "Year"],
+    id_vars=["Month", "Year", "MonthIndex"],
     value_vars=["Sales", "Profit"],
     var_name="Metric",
     value_name="Amount"
 )
 
-year_filter = alt.selection_point(
-    name="year_filter",
-    fields=["Year"],
-    bind=alt.binding_select(
-        options=[None, 2014, 2015, 2016, 2017],
-        labels=["All Years", "2014", "2015", "2016", "2017"],
-        name="Filter by Year: "
-    ),
-    value=None
+COLOR_SCALE = alt.Scale(domain=["Sales", "Profit"], range=[BLUE, ORANGE])
+
+# Sliders: 1–48 (month index), Vega expr converts to readable date label
+start_slider = alt.param(
+    name="start_month", value=1,
+    bind=alt.binding_range(min=1, max=48, step=1, name="Start: ")
+)
+end_slider = alt.param(
+    name="end_month", value=48,
+    bind=alt.binding_range(min=1, max=48, step=1, name="End:   ")
 )
 
-color_scale = alt.Scale(domain=["Sales", "Profit"], range=[STEEL, TEAL])
+# ── Dynamic date label (Vega expression → readable month/year) ────────────────
+# Converts index: 1="Jan 2014", 13="Jan 2015", etc.
+START_EXPR = "timeFormat(datetime(2014 + floor((start_month-1)/12), (start_month-1)%12, 1), '%b %Y')"
+END_EXPR   = "timeFormat(datetime(2014 + floor((end_month-1)/12),   (end_month-1)%12,   1), '%b %Y')"
 
+label_df = pd.DataFrame({"placeholder": [1]})
+
+date_label = (
+    alt.Chart(label_df)
+    .transform_calculate(label=f"'Range: ' + {START_EXPR} + ' → ' + {END_EXPR}")
+    .mark_text(align="left", fontSize=12, fontWeight="bold", color=DARK_BLUE,
+               dx=0, dy=0)
+    .encode(
+        x=alt.value(10),
+        y=alt.value(18),
+        text="label:N"
+    )
+)
+
+# ── Main lines ────────────────────────────────────────────────────────────────
 lines = (
     alt.Chart(monthly_long)
     .mark_line(point=True, strokeWidth=2.5)
     .encode(
-        x=alt.X(
-            "Month:T",
-            title="Order Month",
-            axis=alt.Axis(format="%b %Y", labelAngle=-45)
-        ),
-        y=alt.Y(
-            "Amount:Q",
-            title="USD ($)",
-            axis=alt.Axis(format="$,.0f")
-        ),
-        color=alt.Color("Metric:N", scale=color_scale, title="Metric"),
+        x=alt.X("Month:T", title="Order Month",
+                axis=alt.Axis(format="%b %Y", labelAngle=-45)),
+        y=alt.Y("Amount:Q", title="USD ($)",
+                axis=alt.Axis(format="$,.0f")),
+        color=alt.Color("Metric:N", scale=COLOR_SCALE, title="Metric"),
         strokeDash=alt.condition(
             alt.datum.Metric == "Sales",
             alt.value([4, 2]),
@@ -77,45 +77,49 @@ lines = (
             alt.Tooltip("Amount:Q", title="Amount", format="$,.0f"),
         ]
     )
-    .add_params(year_filter)
-    .transform_filter(year_filter)
-    .properties(width=750, height=350)
+    .transform_filter(
+        "datum.MonthIndex >= start_month && datum.MonthIndex <= end_month"
+    )
+    .properties(width=750, height=340)
 )
 
-#ZERO LINE
 zero_line = (
     alt.Chart(monthly_long)
-    .mark_rule(strokeDash=[4, 2], color=LOSS_RED, opacity=0.7, strokeWidth=1.5)
+    .mark_rule(strokeDash=[4, 2], color=GREEN, opacity=0.8, strokeWidth=1.8)
     .encode(y=alt.datum(0))
-    .transform_filter(year_filter)
+    .transform_filter(
+        "datum.MonthIndex >= start_month && datum.MonthIndex <= end_month"
+    )
 )
 
-# Break-even label
 zero_label = (
     alt.Chart(monthly_long)
-    .mark_text(color=LOSS_RED, fontSize=10, align="left", dx=6, dy=-6)
+    .mark_text(color=GREEN, fontSize=10, align="left", dx=6, dy=-6)
     .encode(
         x=alt.X("min(Month):T"),
         y=alt.datum(0),
         text=alt.value("← break-even $0"),
     )
-    .transform_filter(year_filter)
+    .transform_filter(
+        "datum.MonthIndex >= start_month && datum.MonthIndex <= end_month"
+    )
 )
 
 viz1 = (
-    (lines + zero_line + zero_label)
+    alt.layer(lines, zero_line, zero_label, date_label)
+    .add_params(start_slider, end_slider)
     .properties(
+        width=750, height=340,
         title=alt.TitleParams(
             "Monthly Sales and Profit Over Time (2014–2017)",
-            subtitle="Profit consistently trails Sales — discount spikes often coincide with profit dips",
-            fontSize=16,
-            subtitleFontSize=12,
-            color=DARK_BLUE,
-            subtitleColor=GRAY,
+            subtitle="Profit consistently trails Sales — slide to select any time range",
+            fontSize=16, subtitleFontSize=12,
+            color=DARK_BLUE, subtitleColor=GRAY,
         )
     )
     .configure_view(strokeWidth=0)
     .configure_axis(labelFont="sans-serif", titleFont="sans-serif")
+    .configure_legend(titleFontSize=12, labelFontSize=11)
 )
 
 viz1.save(OUTPUT_FILE)

@@ -1,404 +1,373 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Viz 5 – Furniture Deep Dive (D3)</title>
+  <title>Viz 5 – Profit Flow Sankey</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
   <style>
     :root {
-      --teal:      #2A9D8F;
-      --steel:     #457B9D;
-      --orange:    #E76F51;
-      --red:       #E63946;
-      --gray:      #A8AAAD;
-      --dark:      #1D3557;
-      --bg:        #F8F9FA;
-      --white:     #FFFFFF;
+      --teal:   #2A9D8F;
+      --orange: #E76F51;
+      --red:    #E63946;
+      --gray:   #A8AAAD;
+      --dark:   #1D3557;
+      --bg:     #F8F9FA;
+      --white:  #FFFFFF;
+      --blue:   #457B9D;
+      --pink:   #F72585;
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: "Helvetica Neue", sans-serif; background: var(--bg); color: var(--dark); padding: 20px 28px; }
 
-    body {
-      font-family: "Helvetica Neue", sans-serif;
-      background: var(--bg);
-      color: var(--dark);
-      padding: 24px 32px;
-    }
+    h2 { font-size: 1.1rem; font-weight: 700; color: var(--dark); margin-bottom: 3px; }
+    .subtitle { font-size: 0.8rem; color: var(--gray); margin-bottom: 16px; }
 
-    h2 {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: var(--dark);
-      margin-bottom: 4px;
-    }
-    .subtitle {
-      font-size: 0.85rem;
-      color: var(--gray);
-      margin-bottom: 18px;
+    /* Controls */
+    .controls { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; margin-bottom: 18px; }
+    .ctrl-group { display: flex; flex-direction: column; gap: 4px; }
+    .ctrl-label { font-size: 0.75rem; font-weight: 600; color: var(--dark); }
+    select {
+      font-size: 0.8rem; padding: 5px 10px;
+      border: 1px solid #ccc; border-radius: 4px;
+      background: var(--white); color: var(--dark); cursor: pointer;
     }
 
-    .controls {
-      display: flex;
-      gap: 16px;
-      align-items: center;
-      flex-wrap: wrap;
-      margin-bottom: 20px;
+    /* Slider */
+    .slider-wrap { display: flex; align-items: center; gap: 10px; }
+    input[type=range] {
+      -webkit-appearance: none; width: 200px; height: 4px;
+      background: #ddd; border-radius: 2px; outline: none;
     }
-    .controls label {
-      font-size: 0.82rem;
-      font-weight: 600;
-      color: var(--dark);
-      margin-right: 4px;
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 16px; height: 16px;
+      border-radius: 50%; background: var(--blue);
+      border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      cursor: grab;
     }
-    .controls select {
-      font-size: 0.82rem;
-      padding: 4px 8px;
-      border: 1px solid var(--gray);
-      border-radius: 4px;
-      background: var(--white);
-      color: var(--dark);
-      cursor: pointer;
-    }
-    .hint {
-      font-size: 0.78rem;
-      color: var(--gray);
-      font-style: italic;
+    .slider-val {
+      font-size: 0.78rem; font-weight: 700; color: var(--blue);
+      min-width: 42px;
     }
 
-    #charts {
-      display: flex;
-      gap: 32px;
-      flex-wrap: wrap;
-      align-items: flex-start;
-    }
+    /* Chart panel */
+    .panel { background: var(--white); border-radius: 8px; padding: 18px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
 
-    .chart-box {
-      background: var(--white);
-      border-radius: 8px;
-      padding: 16px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    /* Stats row */
+    #stats-row { display: flex; gap: 20px; margin-bottom: 14px; flex-wrap: wrap; }
+    .stat-box {
+      background: var(--bg); border-radius: 6px; padding: 8px 14px;
+      font-size: 0.78rem; color: var(--dark);
     }
-    .chart-title {
-      font-size: 0.88rem;
-      font-weight: 600;
-      color: var(--dark);
-      margin-bottom: 8px;
-    }
+    .stat-box strong { font-size: 0.92rem; display: block; margin-bottom: 2px; }
+    .stat-box.profit strong { color: var(--teal); }
+    .stat-box.loss   strong { color: var(--red); }
+    .stat-box.orders strong { color: var(--blue); }
 
+    /* Column labels */
+    .col-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; fill: var(--gray); }
+
+    /* Tooltip */
     #tooltip {
-      position: fixed;
-      background: var(--white);
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      padding: 10px 14px;
-      font-size: 0.78rem;
-      color: var(--dark);
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.15s;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-      max-width: 220px;
-      line-height: 1.6;
-      z-index: 999;
+      position: fixed; background: var(--white); border: 1px solid #ddd;
+      border-radius: 6px; padding: 9px 13px; font-size: 0.76rem;
+      pointer-events: none; opacity: 0; transition: opacity 0.15s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12); line-height: 1.65; z-index: 999;
     }
 
-    .selection { fill: var(--steel); fill-opacity: 0.15; stroke: var(--steel); stroke-width: 1; }
+    /* Legend */
+    .legend { display: flex; gap: 16px; margin-top: 10px; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.72rem; }
+    .legend-swatch { width: 14px; height: 14px; border-radius: 3px; }
 
-    .axis text { font-size: 0.72rem; fill: #555; }
-    .axis path, .axis line { stroke: #ccc; }
-    .axis-label { font-size: 0.78rem; fill: var(--dark); font-weight: 600; }
-
-
-
-    .zero-line { stroke: var(--red); stroke-dasharray: 5,3; stroke-width: 1.5; opacity: 0.8; }
-
-    .legend-item text { font-size: 0.78rem; fill: var(--dark); }
+    .hint { font-size: 0.72rem; color: var(--gray); font-style: italic; margin-top: 6px; }
   </style>
 </head>
-
 <body>
 
-<h2>Deep Dive: Why Do Furniture Tables & Bookcases Lose Money?</h2>
-<p class="subtitle">
-  Explore how discount rate, ship mode, and sub-category combine to drive losses in Furniture.
-  <strong>Brush the scatter plot</strong> to filter the bar chart on the right.
-</p>
+<h2>Where Does Profit Go? — Ship Mode × Discount × Outcome</h2>
+<p class="subtitle">Each flow shows how orders move from ship mode through discount level to profit or loss.</p>
 
+<!-- Controls -->
 <div class="controls">
-  <div>
-    <label for="regionSel">Region:</label>
-    <select id="regionSel">
-      <option value="all">All Regions</option>
-      <option value="Central">Central</option>
-      <option value="East">East</option>
-      <option value="South">South</option>
-      <option value="West">West</option>
+  <div class="ctrl-group">
+    <span class="ctrl-label">Category</span>
+    <select id="catSel">
+      <option value="All">All Categories</option>
+      <option value="Furniture" selected>Furniture</option>
+      <option value="Office Supplies">Office Supplies</option>
+      <option value="Technology">Technology</option>
     </select>
   </div>
-  <div>
-    <label for="subCatSel">Sub-Category:</label>
-    <select id="subCatSel">
-      <option value="all">All Furniture</option>
-      <option value="Tables">Tables</option>
-      <option value="Bookcases">Bookcases</option>
-      <option value="Chairs">Chairs</option>
-      <option value="Furnishings">Furnishings</option>
-    </select>
+  <div class="ctrl-group">
+    <span class="ctrl-label">Max Discount: <span id="discVal">80%</span></span>
+    <div class="slider-wrap">
+      <span style="font-size:0.72rem;color:var(--gray)">0%</span>
+      <input type="range" id="discSlider" min="0" max="80" step="5" value="80"/>
+      <span style="font-size:0.72rem;color:var(--gray)">80%</span>
+    </div>
   </div>
-  <span class="hint">💡 Brush the scatter to filter the bar chart</span>
 </div>
 
-<div id="charts">
-  <div class="chart-box">
-    <div class="chart-title">Discount vs. Profit (each dot = 1 order line)</div>
-    <svg id="scatter"></svg>
-  </div>
-  <div class="chart-box">
-    <div class="chart-title">Total Profit by Ship Mode (brushed selection)</div>
-    <svg id="bar"></svg>
-  </div>
+<!-- Stats -->
+<div id="stats-row">
+  <div class="stat-box orders"><strong id="s-orders">—</strong>Total Orders</div>
+  <div class="stat-box profit"><strong id="s-profit">—</strong>Profitable Orders</div>
+  <div class="stat-box loss"><strong id="s-loss">—</strong>Loss Orders</div>
+  <div class="stat-box"><strong id="s-margin">—</strong>Avg Profit Margin</div>
+</div>
+
+<!-- Chart -->
+<div class="panel">
+  <svg id="sankey"></svg>
+  <div class="legend" id="legend"></div>
+  <p class="hint">💡 Hover a flow to inspect it · Click a node to focus · Click again to reset</p>
 </div>
 
 <div id="tooltip"></div>
 
 <script>
-const SM = { top: 30, right: 20, bottom: 55, left: 65 };
-const SW = 480, SH = 380;
-const BM = { top: 30, right: 20, bottom: 55, left: 110 };
-const BW = 320, BH = 380;
+// ── Config ──────────────────────────────────────────────────────────────────
+const W = 820, H = 400;
+const M = { top: 28, right: 120, bottom: 20, left: 120 };
 
-const svgS = d3.select("#scatter").attr("width", SW + SM.left + SM.right)
-                                   .attr("height", SH + SM.top + SM.bottom);
-const svgB = d3.select("#bar").attr("width", BW + BM.left + BM.right)
-                                .attr("height", BH + BM.top + BM.bottom);
+const SHIP_ORDER = ["Standard Class","Second Class","First Class","Same Day"];
+const DISC_ORDER = ["0%","1–20%","21–35%","36–80%"];
+const OUT_ORDER  = ["Profit","Loss"];
 
-const gS = svgS.append("g").attr("transform", `translate(${SM.left},${SM.top})`);
-const gB = svgB.append("g").attr("transform", `translate(${BM.left},${BM.top})`);
+const SHIP_COLORS = {
+  "Standard Class": "#457B9D",
+  "Second Class":   "#2A9D8F",
+  "First Class":    "#E76F51",
+  "Same Day":       "#F72585"
+};
+const DISC_COLORS = {
+  "0%":     "#A8D5B5",
+  "1–20%":  "#E9C46A",
+  "21–35%": "#E76F51",
+  "36–80%": "#E63946"
+};
+const OUT_COLORS = { "Profit": "#2A9D8F", "Loss": "#E63946" };
 
-const subCatColor = d3.scaleOrdinal()
-  .domain(["Tables","Bookcases","Chairs","Furnishings"])
-  .range(["#E63946","#E76F51","#2A9D8F","#457B9D"]);
+const ALL_NODES = [...SHIP_ORDER, ...DISC_ORDER, ...OUT_ORDER];
+const nodeIdx = Object.fromEntries(ALL_NODES.map((n,i) => [n,i]));
 
-const shipColor = d3.scaleOrdinal()
-  .domain(["Standard Class","Second Class","First Class","Same Day"])
-  .range(["#457B9D","#2A9D8F","#F4A261","#E76F51"]);
-
-const tip = d3.select("#tooltip");
-function showTip(html, event) {
-  tip.html(html).style("opacity", 1)
-     .style("left", (event.clientX + 14) + "px")
-     .style("top",  (event.clientY - 28) + "px");
+function nodeColor(name) {
+  if (SHIP_COLORS[name]) return SHIP_COLORS[name];
+  if (DISC_COLORS[name]) return DISC_COLORS[name];
+  return OUT_COLORS[name] || "#ccc";
 }
-function hideTip() { tip.style("opacity", 0); }
 
-let allData = [];
-let brushedData = null;
+// ── Tooltip ──────────────────────────────────────────────────────────────────
+const tip = d3.select("#tooltip");
+function showTip(html, e) { tip.html(html).style("opacity",1).style("left",(e.clientX+14)+"px").style("top",(e.clientY-28)+"px"); }
+function moveTip(e) { tip.style("left",(e.clientX+14)+"px").style("top",(e.clientY-28)+"px"); }
+function hideTip() { tip.style("opacity",0); }
 
-d3.csv("superstore_clean.csv").then(raw => {
+// ── SVG setup ────────────────────────────────────────────────────────────────
+const svg = d3.select("#sankey")
+  .attr("width",  W + M.left + M.right)
+  .attr("height", H + M.top  + M.bottom);
+const g = svg.append("g").attr("transform", `translate(${M.left},${M.top})`);
 
-  allData = raw
-    .filter(d => d["Category"] === "Furniture")
-    .map(d => ({
-      subCat:   d["Sub-Category"],
-      region:   d["Region"],
-      shipMode: d["Ship Mode"],
-      discount: +d["Discount"],
-      profit:   +d["Profit"],
-      sales:    +d["Sales"],
-      product:  d["Product Name"],
-      state:    d["State"],
-    }));
+// Column label layer
+const labelG = svg.append("g").attr("transform", `translate(${M.left},${M.top})`);
 
-  render();
+// ── Build legend ─────────────────────────────────────────────────────────────
+const legData = [
+  ...SHIP_ORDER.map(s => ({ label: s, color: SHIP_COLORS[s] })),
+  { label: "Profit", color: OUT_COLORS["Profit"] },
+  { label: "Loss",   color: OUT_COLORS["Loss"]   },
+];
+const legDiv = d3.select("#legend");
+legData.forEach(d => {
+  const item = legDiv.append("div").attr("class","legend-item");
+  item.append("div").attr("class","legend-swatch").style("background", d.color);
+  item.append("span").text(d.label);
 });
 
-function getFiltered() {
-  const region = document.getElementById("regionSel").value;
-  const subCat = document.getElementById("subCatSel").value;
-  return allData.filter(d =>
-    (region === "all" || d.region === region) &&
-    (subCat === "all" || d.subCat === subCat)
-  );
-}
+// ── State ─────────────────────────────────────────────────────────────────────
+let selectedNode = null;
 
-function render() {
-  const data = getFiltered();
-  brushedData = null;
-  drawScatter(data);
-  drawBar(data);
-}
-
-function drawScatter(data) {
-  gS.selectAll("*").remove();
-
-  const jittered = data.map(d => ({
-    ...d,
-    discountJ: d.discount + (Math.random() - 0.5) * 0.036
+// ── Process data ──────────────────────────────────────────────────────────────
+function buildGraph(rawData, category, maxDisc) {
+  const filtered = rawData.filter(d => {
+    if (category !== "All" && d.Category !== category) return false;
+    if (+d.Discount > maxDisc / 100) return false;
+    return true;
+  }).map(d => ({
+    ship:     d["Ship Mode"],
+    discount: +d.Discount,
+    profit:   +d.Profit,
+    sales:    +d.Sales,
+    margin:   +d.Profit / +d.Sales,
+    discBucket: +d.Discount === 0         ? "0%"    :
+                +d.Discount <= 0.20        ? "1–20%" :
+                +d.Discount <= 0.35        ? "21–35%" : "36–80%",
+    outcome:  +d.Profit > 0 ? "Profit" : "Loss"
   }));
 
-  const xS = d3.scaleLinear().domain([-0.05, 0.85]).range([0, SW]);
-  const yS = d3.scaleLinear().domain([-2000, 2500]).range([SH, 0]).clamp(true);
+  // Update stats
+  const nProfit = filtered.filter(d=>d.outcome==="Profit").length;
+  const nLoss   = filtered.filter(d=>d.outcome==="Loss").length;
+  const margin  = filtered.length ? d3.mean(filtered, d=>d.margin) : 0;
+  document.getElementById("s-orders").textContent = d3.format(",")(filtered.length);
+  document.getElementById("s-profit").textContent = d3.format(",")(nProfit) + " (" + d3.format(".0%")(nProfit/filtered.length||0) + ")";
+  document.getElementById("s-loss").textContent   = d3.format(",")(nLoss)   + " (" + d3.format(".0%")(nLoss/filtered.length||0)   + ")";
+  document.getElementById("s-margin").textContent = d3.format(".1%")(margin||0);
 
-  gS.append("g").attr("class","axis").attr("transform",`translate(0,${SH})`)
-    .call(d3.axisBottom(xS).tickFormat(d3.format(".0%")).ticks(9));
-  gS.append("g").attr("class","axis")
-    .call(d3.axisLeft(yS).tickFormat(d3.format("$,.0f")).ticks(8));
+  // Build links
+  const linkMap = {};
+  filtered.forEach(d => {
+    // Ship → Disc
+    const k1 = `${d.ship}||${d.discBucket}`;
+    if (!linkMap[k1]) linkMap[k1] = { source: nodeIdx[d.ship], target: nodeIdx[d.discBucket], value: 0, profit: 0, label: `${d.ship} → ${d.discBucket}` };
+    linkMap[k1].value++;
+    linkMap[k1].profit += d.profit;
 
-  gS.append("text").attr("class","axis-label")
-    .attr("x", SW/2).attr("y", SH + 45).attr("text-anchor","middle")
-    .text("Discount Rate");
-  gS.append("text").attr("class","axis-label")
-    .attr("transform","rotate(-90)")
-    .attr("x", -SH/2).attr("y", -52).attr("text-anchor","middle")
-    .text("Profit (USD)");
-
-  gS.append("line").attr("class","zero-line")
-    .attr("x1", 0).attr("x2", SW)
-    .attr("y1", yS(0)).attr("y2", yS(0));
-
-  gS.append("text").attr("x", SW - 4).attr("y", yS(0) - 6)
-    .attr("text-anchor","end").attr("font-size","0.7rem")
-    .attr("fill","#E63946").attr("font-style","italic")
-    .text("Break-even");
-
-  const dots = gS.append("g").selectAll("circle").data(jittered).join("circle")
-    .attr("cx", d => xS(d.discountJ))
-    .attr("cy", d => yS(d.profit))
-    .attr("r", 4)
-    .attr("fill", d => subCatColor(d.subCat))
-    .attr("opacity", 0.55)
-    .attr("stroke","white").attr("stroke-width", 0.5)
-    .style("cursor","crosshair");
-
-  dots.on("mouseover", (event, d) => {
-      showTip(`
-        <strong>${d.product.slice(0,35)}…</strong><br>
-        Sub-Category: ${d.subCat}<br>
-        Region: ${d.region} | ${d.state}<br>
-        Ship Mode: ${d.shipMode}<br>
-        Discount: ${d3.format(".0%")(d.discount)}<br>
-        Profit: ${d3.format("$,.2f")(d.profit)}<br>
-        Sales: ${d3.format("$,.2f")(d.sales)}
-      `, event);
-    })
-    .on("mousemove", (event) => {
-      tip.style("left",(event.clientX+14)+"px").style("top",(event.clientY-28)+"px");
-    })
-    .on("mouseout", hideTip);
-
-  const legendData = ["Tables","Bookcases","Chairs","Furnishings"];
-  const legend = gS.append("g").attr("transform",`translate(0, -22)`);
-  legendData.forEach((s, i) => {
-    const lg = legend.append("g").attr("class","legend-item")
-      .attr("transform",`translate(${i * 115}, 0)`);
-    lg.append("circle").attr("r", 5).attr("fill", subCatColor(s)).attr("cy", 0);
-    lg.append("text").attr("x", 9).attr("dy","0.35em").text(s);
+    // Disc → Outcome
+    const k2 = `${d.discBucket}||${d.outcome}`;
+    if (!linkMap[k2]) linkMap[k2] = { source: nodeIdx[d.discBucket], target: nodeIdx[d.outcome], value: 0, profit: 0, label: `${d.discBucket} → ${d.outcome}` };
+    linkMap[k2].value++;
+    linkMap[k2].profit += d.profit;
   });
 
-  const brush = d3.brush()
-    .extent([[0, 0], [SW, SH]])
-    .on("brush end", ({ selection }) => {
-      if (!selection) {
-        brushedData = null;
-        dots.attr("opacity", 0.55);
-        drawBar(data);
-        return;
-      }
-      const [[x0,y0],[x1,y1]] = selection;
-      const selected = jittered.filter(d =>
-        xS(d.discountJ) >= x0 && xS(d.discountJ) <= x1 &&
-        yS(d.profit)    >= y0 && yS(d.profit)    <= y1
-      );
-      brushedData = selected;
-      dots.attr("opacity", d =>
-        selected.includes(d) ? 0.85 : 0.1
-      );
-      drawBar(selected);
-    });
+  const links = Object.values(linkMap).filter(l => l.value > 0);
+  const activeNodeIds = new Set(links.flatMap(l => [l.source, l.target]));
+  const nodes = ALL_NODES
+    .map((name, i) => ({ name, index: i }))
+    .filter(n => activeNodeIds.has(n.index));
 
-  gS.append("g").attr("class","brush").call(brush);
+  // Remap indices for sankey (needs 0-based contiguous)
+  const idxMap = {};
+  nodes.forEach((n,i) => { idxMap[n.index] = i; });
+  const remappedLinks = links.map(l => ({
+    ...l,
+    source: idxMap[l.source],
+    target: idxMap[l.target],
+  }));
+
+  return { nodes, links: remappedLinks };
 }
 
-//bar chart
-function drawBar(data) {
-  gB.selectAll("*").remove();
+// ── Draw ──────────────────────────────────────────────────────────────────────
+function draw(rawData, category, maxDisc) {
+  g.selectAll("*").remove();
+  labelG.selectAll("*").remove();
+  selectedNode = null;
 
-  const shipModes = ["Standard Class","Second Class","First Class","Same Day"];
+  const { nodes, links } = buildGraph(rawData, category, maxDisc);
+  if (!nodes.length || !links.length) {
+    g.append("text").attr("x", W/2).attr("y", H/2).attr("text-anchor","middle")
+     .attr("fill","#999").attr("font-size","0.9rem").text("No data for this filter");
+    return;
+  }
 
-  const agg = shipModes.map(sm => {
-    const rows = data.filter(d => d.shipMode === sm);
-    return {
-      shipMode: sm,
-      profit: d3.sum(rows, d => d.profit),
-      count:  rows.length
-    };
+  const sankey = d3.sankey()
+    .nodeId(d => d.index)
+    .nodeWidth(18)
+    .nodePadding(14)
+    .extent([[0, 0], [W, H]]);
+
+  const graph = sankey({ nodes: nodes.map(d=>({...d})), links: links.map(d=>({...d})) });
+
+  // Column labels
+  const colLabels = [
+    { x: graph.nodes.filter(n=>SHIP_ORDER.includes(n.name))[0]?.x0 + 9, text: "Ship Mode" },
+    { x: graph.nodes.filter(n=>DISC_ORDER.includes(n.name))[0]?.x0 + 9, text: "Discount Level" },
+    { x: graph.nodes.filter(n=>OUT_ORDER.includes(n.name))[0]?.x0  + 9, text: "Outcome" },
+  ].filter(d => d.x !== undefined);
+
+  colLabels.forEach(d => {
+    labelG.append("text").attr("class","col-label")
+      .attr("x", d.x).attr("y", -8).attr("text-anchor","middle").text(d.text);
   });
 
-  const xB = d3.scaleLinear()
-    .domain([d3.min(agg, d => d.profit) * 1.1, d3.max(agg, d => d.profit) * 1.1])
-    .range([0, BW]).nice();
-
-  const yB = d3.scaleBand()
-    .domain(shipModes)
-    .range([0, BH])
-    .padding(0.35);
-
-  // Axes
-  gB.append("g").attr("class","axis").attr("transform",`translate(0,${BH})`)
-    .call(d3.axisBottom(xB).tickFormat(d3.format("$,.0f")).ticks(5));
-  gB.append("g").attr("class","axis").call(d3.axisLeft(yB));
-
-  // Axis label
-  gB.append("text").attr("class","axis-label")
-    .attr("x", BW/2).attr("y", BH + 45).attr("text-anchor","middle")
-    .text("Total Profit (USD)");
-
-  // Zero line
-  gB.append("line").attr("class","zero-line")
-    .attr("x1", xB(0)).attr("x2", xB(0))
-    .attr("y1", 0).attr("y2", BH);
-
-  // Bars
-  gB.selectAll("rect").data(agg).join("rect")
-    .attr("x", d => d.profit >= 0 ? xB(0) : xB(d.profit))
-    .attr("y", d => yB(d.shipMode))
-    .attr("width", d => Math.abs(xB(d.profit) - xB(0)))
-    .attr("height", yB.bandwidth())
-    .attr("fill", d => d.profit >= 0 ? "#2A9D8F" : "#E63946")
-    .attr("rx", 3)
-    .attr("opacity", 0.85)
-    .on("mouseover", (event, d) => {
-      showTip(`
-        <strong>${d.shipMode}</strong><br>
+  // Links
+  const linkSel = g.selectAll("path.link").data(graph.links).join("path")
+    .attr("class","link")
+    .attr("d", d3.sankeyLinkHorizontal())
+    .attr("fill", "none")
+    .attr("stroke", d => {
+      const tgt = ALL_NODES[d.target.index] || d.target.name;
+      return tgt === "Profit" ? "#2A9D8F" : tgt === "Loss" ? "#E63946" : "#aaa";
+    })
+    .attr("stroke-width", d => Math.max(1, d.width))
+    .attr("stroke-opacity", 0.35)
+    .style("cursor","pointer")
+    .on("mouseover", function(e, d) {
+      d3.select(this).attr("stroke-opacity", 0.75);
+      const pct = d3.format(".0%")(d.value / d3.sum(graph.links.filter(l=>l.source.index===d.source.index), l=>l.value));
+      showTip(`<strong>${d.label}</strong><br>
+        Orders: ${d3.format(",")(d.value)} (${pct} of source)<br>
         Total Profit: ${d3.format("$,.0f")(d.profit)}<br>
-        Order Lines: ${d.count}
-      `, event);
+        Avg Margin: ${d3.format(".1%")(d.profit / d3.sum(graph.links.filter(l=>l.source.index===d.source.index && l.target.index===d.target.index), l=>l.value) / 100 || d.profit/d.value/100)}`, e);
     })
-    .on("mousemove", (event) => {
-      tip.style("left",(event.clientX+14)+"px").style("top",(event.clientY-28)+"px");
-    })
-    .on("mouseout", hideTip);
+    .on("mousemove", moveTip)
+    .on("mouseout", function() {
+      d3.select(this).attr("stroke-opacity", selectedNode ? getLinkOpacity(d3.select(this).datum()) : 0.35);
+      hideTip();
+    });
 
-  gB.selectAll(".bar-label").data(agg).join("text")
-    .attr("class","bar-label")
-    .attr("x", d => d.profit >= 0 ? xB(d.profit) + 4 : xB(d.profit) - 4)
-    .attr("y", d => yB(d.shipMode) + yB.bandwidth()/2)
-    .attr("dy","0.35em")
-    .attr("text-anchor", d => d.profit >= 0 ? "start" : "end")
-    .attr("font-size","0.72rem")
+  // Nodes
+  const nodeSel = g.selectAll("rect.node").data(graph.nodes).join("rect")
+    .attr("class","node")
+    .attr("x", d => d.x0).attr("y", d => d.y0)
+    .attr("width",  d => d.x1 - d.x0)
+    .attr("height", d => Math.max(1, d.y1 - d.y0))
+    .attr("fill", d => nodeColor(d.name))
+    .attr("rx", 3)
+    .attr("opacity", 0.9)
+    .style("cursor","pointer")
+    .on("click", function(e, d) {
+      if (selectedNode === d.index) {
+        selectedNode = null;
+        linkSel.attr("stroke-opacity", 0.35);
+        nodeSel.attr("opacity", 0.9);
+      } else {
+        selectedNode = d.index;
+        linkSel.attr("stroke-opacity", l => getLinkOpacity(l));
+        nodeSel.attr("opacity", n => (n.index === d.index) ? 1.0 : 0.35);
+      }
+    })
+    .on("mouseover", (e,d) => showTip(`<strong>${d.name}</strong><br>Orders: ${d3.format(",")(d.value)}`, e))
+    .on("mousemove", moveTip).on("mouseout", hideTip);
+
+  // Node labels
+  g.selectAll("text.node-label").data(graph.nodes).join("text")
+    .attr("class","node-label")
+    .attr("x", d => d.x0 < W/2 ? d.x0 - 6 : d.x1 + 6)
+    .attr("y", d => (d.y0 + d.y1) / 2)
+    .attr("dy", "0.35em")
+    .attr("text-anchor", d => d.x0 < W/2 ? "end" : "start")
+    .attr("font-size", "0.72rem")
     .attr("fill", "#333")
-    .text(d => d3.format("$,.0f")(d.profit));
+    .text(d => `${d.name} (${d3.format(",")(d.value)})`);
 
-  if (data.length === 0) {
-    gB.append("text").attr("x", BW/2).attr("y", BH/2)
-      .attr("text-anchor","middle").attr("fill",var_gray).attr("font-size","0.85rem")
-      .text("No data in selection");
+  function getLinkOpacity(l) {
+    if (selectedNode === null) return 0.35;
+    return (l.source.index === selectedNode || l.target.index === selectedNode) ? 0.75 : 0.05;
   }
 }
 
-document.getElementById("regionSel").addEventListener("change", render);
-document.getElementById("subCatSel").addEventListener("change", render);
+// ── Load & init ───────────────────────────────────────────────────────────────
+d3.csv("superstore_clean.csv").then(raw => {
+  let cat    = document.getElementById("catSel").value;
+  let maxDisc = +document.getElementById("discSlider").value;
+
+  draw(raw, cat, maxDisc);
+
+  document.getElementById("catSel").addEventListener("change", function() {
+    cat = this.value; draw(raw, cat, maxDisc);
+  });
+
+  document.getElementById("discSlider").addEventListener("input", function() {
+    maxDisc = +this.value;
+    document.getElementById("discVal").textContent = maxDisc + "%";
+    draw(raw, cat, maxDisc);
+  });
+});
 </script>
 </body>
 </html>
