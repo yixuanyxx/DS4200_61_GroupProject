@@ -251,9 +251,15 @@
   </footer>
 
   <script src="js/main.js"></script>
+  <style>
+    .chart-container { width: 100%; overflow-x: auto; }
+    .chart-container .vega-embed { width: 100% !important; }
+    .chart-container .vega-embed canvas,
+    .chart-container .vega-embed svg { max-width: 100% !important; }
+  </style>
   <script>
     (function() {
-      var embedOpts = { renderer: "svg", actions: false };
+      var embedOpts = { renderer: "svg", actions: false, width: "container" };
       if (window.vegaEmbed) {
         vegaEmbed("#viz1_container", "viz1_time_series.json", embedOpts).catch(console.error);
         vegaEmbed("#viz2_container", "viz2_discount_profit.json", embedOpts).catch(console.error);
