@@ -20,10 +20,7 @@ SHIP_ORDER = ["Standard Class", "Second Class", "First Class", "Same Day"]
 CAT_ORDER  = ["Furniture", "Office Supplies", "Technology"]
 CAT_COLORS = ["#E76F51", "#F72585", "#2A9D8F"]
 
-cat_sel = alt.selection_point(
-    name="cat_sel_v4", fields=["Category"], bind="legend"
-)
-
+# FIX: no opacity condition — was making all bars invisible before first click
 bars = (
     alt.Chart(stats)
     .mark_bar(cornerRadiusTopRight=4, cornerRadiusBottomRight=4)
@@ -38,14 +35,12 @@ bars = (
             title="Category"
         ),
         yOffset=alt.YOffset("Category:N", sort=CAT_ORDER),
-        opacity=alt.condition(cat_sel, alt.value(0.85), alt.value(0.1)),
         tooltip=[
             alt.Tooltip("Ship Mode:N", title="Ship Mode"),
             alt.Tooltip("Category:N",  title="Category"),
             alt.Tooltip("Mean:Q",      title="Avg Margin", format=".1%"),
         ]
     )
-    .add_params(cat_sel)
     .properties(width=500, height=260)
 )
 
@@ -54,7 +49,7 @@ bars = (
     .properties(
         title=alt.TitleParams(
             "Profit Margin by Ship Mode and Category",
-            subtitle="Second Class yields the highest margin — Standard Class, despite being most used, earns the least · Click legend to filter",
+            subtitle="Second Class yields the highest margin — Standard Class earns the least",
             fontSize=16, subtitleFontSize=12,
             color=DARK_BLUE, subtitleColor=GRAY,
         )

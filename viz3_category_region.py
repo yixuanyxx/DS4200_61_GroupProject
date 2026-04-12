@@ -29,7 +29,6 @@ off_subcats = sorted(df[df['Category']=='Office Supplies']['Sub-Category'].uniqu
 tec_subcats = sorted(df[df['Category']=='Technology']['Sub-Category'].unique().tolist())
 all_subcats = fur_subcats + off_subcats + tec_subcats
 
-# Build wide format: one row per state
 rows = []
 for state, g in df.groupby('State'):
     row = {
@@ -46,36 +45,26 @@ for state, g in df.groupby('State'):
 
 states_wide = pd.DataFrame(rows).fillna(0)
 
-# ── Single dropdown with all options ─────────────────────────────────────────
 options = ['All', 'Furniture', 'Office_Supplies', 'Technology'] + all_subcats
-labels  = [
-    'All Categories',
-    'Furniture',
-    'Office Supplies',
-    'Technology',
-] + \
+labels  = ['All Categories', 'Furniture', 'Office Supplies', 'Technology'] + \
     [f'  Furniture › {s}' for s in fur_subcats] + \
     [f'  Office Supplies › {s}' for s in off_subcats] + \
     [f'  Technology › {s}' for s in tec_subcats]
 
 sel = alt.param(
     name='sel', value='All',
-    bind=alt.binding_select(
-        options=options,
-        labels=labels,
-        name='Filter: '
-    )
+    bind=alt.binding_select(options=options, labels=labels, name='Filter: ')
 )
 
-# ── Map ───────────────────────────────────────────────────────────────────────
-TOPO_URL = 'https://cdn.jsdelivr.net/npm/vega-datasets@2/data/us-10m.json'
+# FIX: use pinned vega-datasets version and reduce width to fit container
+TOPO_URL = 'https://cdn.jsdelivr.net/npm/vega-datasets@1.31.1/data/us-10m.json'
 lookup_fields = ['State', 'All', 'Furniture', 'Office_Supplies', 'Technology'] + all_subcats
 
 background = (
     alt.Chart(alt.topo_feature(TOPO_URL, 'states'))
     .mark_geoshape(fill='#e0e0e0', stroke='white', strokeWidth=0.5)
     .project('albersUsa')
-    .properties(width=720, height=440)
+    .properties(width=640, height=400)
 )
 
 choropleth = (
@@ -91,7 +80,7 @@ choropleth = (
             'SelectedProfit:Q',
             title='Net Profit (USD)',
             scale=alt.Scale(scheme='redyellowgreen', domainMid=0),
-            legend=alt.Legend(orient='bottom', gradientLength=300,
+            legend=alt.Legend(orient='bottom', gradientLength=280,
                               titleFontSize=11, labelFontSize=10)
         ),
         tooltip=[
@@ -101,7 +90,7 @@ choropleth = (
     )
     .add_params(sel)
     .project('albersUsa')
-    .properties(width=720, height=440)
+    .properties(width=640, height=400)
 )
 
 (
