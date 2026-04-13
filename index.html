@@ -43,10 +43,6 @@
           D3 chart to dig into that segment. The idea is to go from the big picture down to one specific problem area.
         </p>
         <p>
-          <strong>What we had to do for class:</strong> clean and explore the data, make static charts in Altair and at
-          least one interactive D3 chart, put everything on this site, and write up what we found.
-        </p>
-        <p>
           This project matters because retail businesses often focus heavily on increasing sales without fully understanding
           how those sales translate into profit. By breaking down profit into its key drivers, we can identify inefficiencies
           in pricing strategies, product performance, and regional differences. The goal is not just to describe the data,
@@ -134,6 +130,9 @@
               <div id="viz1_container" class="chart-container"></div>
             </div>
             <figcaption class="takeaway">
+              <strong>How to use:</strong> Drag the Start and End sliders below the chart to zoom into any time range.
+              The date label at the top left updates in real time. Hover over any data point to see the exact value for that month.
+              <br><br>
               <strong>Takeaway:</strong> Sales and profit both grow year-over-year, with clear Q4 seasonality every year.
               However, profit consistently lags behind sales — revenue growth alone does not guarantee profitability,
               and discount-driven sales may be eroding margins in some months.
@@ -148,9 +147,12 @@
               <div id="viz2_container" class="chart-container"></div>
             </div>
             <figcaption class="takeaway">
+              <strong>How to use:</strong> Hover over any box to see the median, Q1, Q3, and order count for that discount bucket and category.
+              Each group of three boxes represents one discount range, with Furniture (orange), Office Supplies (pink), and Technology (teal) side by side.
+              <br><br>
               <strong>Takeaway:</strong> There is a clear negative relationship between discount rate and profit at the
-              order-line level. Orders with discounts above about 20% frequently fall below the break-even line, and
-              Furniture shows the highest concentration of deeply discounted, loss-making orders.
+              order-line level. The median profit drops below zero above 30% discount, and Furniture is hit hardest —
+              its boxes fall below the break-even line earlier and deeper than the other categories.
             </figcaption>
           </figure>
         </article>
@@ -162,9 +164,14 @@
               <div id="viz3_container" class="chart-container"></div>
             </div>
             <figcaption class="takeaway">
-              <strong>Takeaway:</strong> Technology sub-categories dominate profit, while Tables and Bookcases in the
-              Furniture category are structural loss-makers across most regions — especially Central and East. The
-              region dropdown helps isolate where the problems are strongest.
+              <strong>How to use:</strong> Use the Filter dropdown below the map to switch between All Categories,
+              individual categories (Furniture, Office Supplies, Technology), or any specific sub-category.
+              The map color updates instantly — green states are profitable, red states are loss-making.
+              Hover over any state to see its exact net profit.
+              <br><br>
+              <strong>Takeaway:</strong> California and New York are the most profitable states overall, while Texas,
+              Ohio, and Pennsylvania show significant losses — especially in Furniture. Switching to individual
+              sub-categories like Tables reveals that losses are concentrated in specific states, not spread evenly.
             </figcaption>
           </figure>
         </article>
@@ -176,9 +183,14 @@
               <div id="viz4_container" class="chart-container"></div>
             </div>
             <figcaption class="takeaway">
-              <strong>Takeaway:</strong> Tables stand out as the clearest problem case: they generate substantial sales
-              volume across all regions, yet often produce negative profit. Bookcases show a similar pattern on a
-              smaller scale. This disconnect between sales and profit points to excessive discounting as a key driver of losses.
+              <strong>How to use:</strong> Click any category in the legend (Furniture, Office Supplies, Technology)
+              to highlight its bars and fade the others. Hover over a bar to see the exact average profit margin
+              for that ship mode and category combination.
+              <br><br>
+              <strong>Takeaway:</strong> Second Class shipping yields the highest average profit margin (~15–19%
+              depending on category), while Standard Class — the most commonly used option at 60% of all orders —
+              earns the least. Furniture consistently shows the lowest margins across all ship modes, suggesting
+              that the product category itself is the primary driver of losses rather than shipping choice alone.
             </figcaption>
           </figure>
         </article>
@@ -194,10 +206,15 @@
               ></iframe>
             </div>
             <figcaption class="takeaway">
-              <strong>Takeaway:</strong> Readers can filter by region or sub-category and then brush the scatter plot to
-              select a discount range. The bar chart on the right updates to show how profit breaks down by shipping
-              mode within that selection — revealing that heavily discounted Standard Class furniture orders account
-              for a large share of the losses.
+              <strong>How to use:</strong> Use the Category dropdown to filter all data, then drag the Discount slider
+              to set a maximum discount threshold — watch how the Sankey flows shift as you include higher discounts.
+              Click any node (ship mode, discount level, or outcome) to highlight all flows connected to it;
+              click again to reset. Hover over any flow to see the order count and total profit for that path.
+              <br><br>
+              <strong>Takeaway:</strong> Standard Class shipping combined with discounts above 20% is the dominant
+              loss pathway — the widest red flows consistently point from Standard Class through high discount
+              buckets into Loss. Dragging the discount slider from 0% upward reveals exactly at which discount
+              threshold each category tips from profit into loss.
             </figcaption>
           </figure>
         </article>
@@ -209,23 +226,28 @@
         <h2>Summary of findings</h2>
         <p>
           Putting the charts together: the time series shows overall performance; discount vs profit shows line-level
-          risk; the bar charts show which regions and categories are weak; the subgroup chart names one concrete problem;
-          the D3 piece explores that case. Exact numbers will depend on the final charts when they are plugged in.
+          risk; the map shows which states and categories are weak; the subgroup chart examines ship mode and profit
+          margin; the D3 piece lets users explore the discount-to-loss pipeline interactively.
         </p>
         <p>Three main takeaways for our project question:</p>
         <ol class="findings-list">
           <li>
-            <strong>Profit does not follow sales 1:1.</strong> Same sales level can mean different profit depending on
-            discount and what was sold, so managers should look at margin and discount, not only revenue.
+            <strong>Discounts above 20% reliably destroy profit.</strong> Across all categories, the median profit per
+            order turns negative once discounts exceed 30%, and virtually no orders with discounts above 35% are
+            profitable. Furniture is hit hardest — its IQR falls entirely below zero at high discount levels.
+            Reducing deep discounts in Furniture could be the single highest-impact lever for improving margins.
           </li>
           <li>
-            <strong>Discounts need a second look in some segments.</strong> Where high discount and negative profit show up
-            together, it is worth checking promotion rules or pricing, especially in categories that might have returns or
-            high shipping (we cannot see all costs in the CSV, so this is still based on patterns in the data).
+            <strong>Losses are geographic and product-specific, not random.</strong> Texas, Ohio, and Pennsylvania
+            account for a disproportionate share of losses — particularly in Furniture sub-categories like Tables
+            and Bookcases. California and New York, by contrast, generate profit even in otherwise weak categories.
+            This suggests regional pricing or discount policies may need to be differentiated.
           </li>
           <li>
-            <strong>Region and product type matter together.</strong> A bad region in one category might need a different fix
-            than another region. We are not claiming we proved why, only what the data suggests for follow-up analysis.
+            <strong>Ship mode choice has a measurable but secondary effect.</strong> Second Class shipping yields
+            the highest average profit margin (~15–19%), while Standard Class — used in 60% of all orders —
+            earns roughly 11%. Encouraging customers toward Second Class for mid-size orders could improve
+            margins without requiring changes to product pricing or discount policy.
           </li>
         </ol>
         <p>
@@ -251,9 +273,6 @@
   </footer>
 
   <script src="js/main.js"></script>
-  <style>
-    .chart-container { width: 100%; overflow-x: auto; }
-  </style>
   <script>
     (function() {
       var embedOpts = { renderer: "svg", actions: false };
