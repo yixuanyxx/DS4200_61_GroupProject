@@ -129,7 +129,7 @@
 
 <script>
 // ── Config ──────────────────────────────────────────────────────────────────
-const W = 820, H = 400;
+const W = 820, H = 300;
 const M = { top: 28, right: 120, bottom: 20, left: 120 };
 
 const SHIP_ORDER = ["Standard Class","Second Class","First Class","Same Day"];
@@ -268,6 +268,7 @@ function draw(rawData, category, maxDisc) {
     .nodeId(d => d.index)
     .nodeWidth(18)
     .nodePadding(14)
+    .nodeSort((a, b) => ALL_NODES.indexOf(a.name) - ALL_NODES.indexOf(b.name))
     .extent([[0, 0], [W, H]]);
 
   const graph = sankey({ nodes: nodes.map(d=>({...d})), links: links.map(d=>({...d})) });

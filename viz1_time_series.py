@@ -5,7 +5,7 @@ INPUT_FILE  = "superstore_clean.csv"
 OUTPUT_FILE = "viz1_time_series.json"
 
 BLUE      = "#457B9D"
-ORANGE    = "#E76F51"
+GOLD      = "#E9C46A"
 GREEN     = "#2A9D8F"
 GRAY      = "#A8AAAD"
 DARK_BLUE = "#1D3557"
@@ -25,9 +25,8 @@ monthly_long = monthly.melt(
     value_name="Amount"
 )
 
-COLOR_SCALE = alt.Scale(domain=["Sales", "Profit"], range=[BLUE, ORANGE])
+COLOR_SCALE = alt.Scale(domain=["Sales", "Profit"], range=[BLUE, GOLD])
 
-# Sliders: 1–48 (month index), Vega expr converts to readable date label
 start_slider = alt.param(
     name="start_month", value=1,
     bind=alt.binding_range(min=1, max=48, step=1, name="Start: ")
@@ -37,8 +36,6 @@ end_slider = alt.param(
     bind=alt.binding_range(min=1, max=48, step=1, name="End:   ")
 )
 
-# ── Dynamic date label (Vega expression → readable month/year) ────────────────
-# Converts index: 1="Jan 2014", 13="Jan 2015", etc.
 START_EXPR = "timeFormat(datetime(2014 + floor((start_month-1)/12), (start_month-1)%12, 1), '%b %Y')"
 END_EXPR   = "timeFormat(datetime(2014 + floor((end_month-1)/12),   (end_month-1)%12,   1), '%b %Y')"
 
@@ -56,7 +53,6 @@ date_label = (
     )
 )
 
-# ── Main lines ────────────────────────────────────────────────────────────────
 lines = (
     alt.Chart(monthly_long)
     .mark_line(point=True, strokeWidth=2.5)
@@ -66,11 +62,6 @@ lines = (
         y=alt.Y("Amount:Q", title="USD ($)",
                 axis=alt.Axis(format="$,.0f")),
         color=alt.Color("Metric:N", scale=COLOR_SCALE, title="Metric"),
-        strokeDash=alt.condition(
-            alt.datum.Metric == "Sales",
-            alt.value([4, 2]),
-            alt.value([1, 0])
-        ),
         tooltip=[
             alt.Tooltip("Month:T",  title="Month",  format="%B %Y"),
             alt.Tooltip("Metric:N", title="Metric"),
@@ -80,7 +71,7 @@ lines = (
     .transform_filter(
         "datum.MonthIndex >= start_month && datum.MonthIndex <= end_month"
     )
-    .properties(width=750, height=340)
+    .properties(width=660, height=320)
 )
 
 zero_line = (
@@ -109,7 +100,7 @@ viz1 = (
     alt.layer(lines, zero_line, zero_label, date_label)
     .add_params(start_slider, end_slider)
     .properties(
-        width=750, height=340,
+        width=660, height=320,
         title=alt.TitleParams(
             "Monthly Sales and Profit Over Time (2014–2017)",
             subtitle="Profit consistently trails Sales — slide to select any time range",
