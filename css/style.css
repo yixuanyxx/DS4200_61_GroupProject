@@ -1,15 +1,12 @@
 /* Simple styles for our DS4200 project page */
-
 html {
   box-sizing: border-box;
 }
-
 *,
 *::before,
 *::after {
   box-sizing: inherit;
 }
-
 body {
   margin: 0;
   font-family: Arial, Helvetica, sans-serif;
@@ -18,108 +15,91 @@ body {
   color: #222;
   background: #f5f5f5;
 }
-
 .site-header {
   background: #2b6cb0;
   color: #fff;
   padding: 1.5rem 1rem 1.25rem;
   border-bottom: 3px solid #1a4770;
 }
-
 .header-inner {
   max-width: 900px;
   margin: 0 auto;
 }
-
 .course-line {
   font-size: 0.8rem;
   margin: 0 0 0.5rem;
   opacity: 0.95;
 }
-
 .site-header h1 {
   font-size: 1.75rem;
   margin: 0 0 0.35rem;
   font-weight: bold;
 }
-
 .subtitle {
   margin: 0 0 1rem;
   font-size: 1rem;
 }
-
 .site-nav {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem 1rem;
 }
-
 .site-nav a {
   color: #fff;
   text-decoration: underline;
   font-size: 0.95rem;
 }
-
 .site-nav a:hover {
   color: #e2f0ff;
 }
-
 .section {
   padding: 1.5rem 1rem;
   max-width: 900px;
   margin: 0 auto;
 }
-
 .section-alt {
   background: #eaeaea;
 }
-
 .section-viz {
-  max-width: 900px;
+  max-width: 100%;
+  padding: 1.5rem 1rem;
+  margin: 0 auto;
 }
-
 .container {
   width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
 }
-
 .container.narrow {
   max-width: 700px;
 }
-
 .section h2 {
   font-size: 1.35rem;
   margin: 0 0 0.75rem;
   color: #1a365d;
 }
-
 .section h3 {
   font-size: 1.1rem;
   margin: 0 0 0.5rem;
   color: #2c5282;
 }
-
 .section p {
   margin: 0 0 0.85rem;
 }
-
 .ref-list {
   margin: 0.5rem 0 1rem;
   padding-left: 1.25rem;
 }
-
 .ref-list li {
   margin-bottom: 0.6rem;
 }
-
 .ref-list a {
   color: #2b6cb0;
 }
-
 .section-title-center {
   text-align: center;
   margin-bottom: 0.25rem;
 }
-
 .lead.center {
   text-align: center;
   max-width: 40em;
@@ -127,81 +107,66 @@ body {
   font-size: 0.95rem;
   color: #444;
 }
-
 .viz-block {
   margin-bottom: 2rem;
   scroll-margin-top: 0.75rem;
 }
-
 .viz-figure {
   margin: 0;
   background: #fff;
   border: 1px solid #ccc;
 }
-
 .viz-placeholder {
   min-height: 200px;
   padding: 1rem;
   background: #e8e8e8;
   border-bottom: 1px solid #ccc;
 }
-
 .viz-placeholder p {
   margin: 0 0 0.5rem;
   font-size: 0.95rem;
 }
-
 .viz-placeholder .hint {
   font-size: 0.85rem;
   color: #555;
 }
-
 .viz-placeholder code {
   font-size: 0.85rem;
   background: #ddd;
   padding: 0.1em 0.3em;
 }
-
 .takeaway {
   padding: 0.75rem 1rem;
   font-size: 0.95rem;
   background: #fff;
 }
-
 .takeaway strong {
   color: #1a365d;
 }
-
 .findings-list {
   margin: 0.5rem 0 0.85rem;
   padding-left: 1.25rem;
 }
-
 .findings-list li {
   margin-bottom: 0.5rem;
 }
-
 .site-footer {
   background: #1a365d;
   color: #e2e8f0;
   padding: 1.25rem 1rem;
   font-size: 0.9rem;
 }
-
 .site-footer strong {
   color: #fff;
 }
-
 .footer-meta {
   margin: 0.75rem 0 0;
   font-size: 0.85rem;
 }
-
 @media (min-width: 600px) {
   .section {
     padding: 2rem 1.5rem;
   }
-
   .site-header h1 {
     font-size: 2rem;
   }
